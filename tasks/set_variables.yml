@@ -1,0 +1,11 @@
+---
+- name: Set Docker Binary Path
+  ansible.builtin.command: which docker
+  register: docker_binary_path
+  changed_when: false
+  failed_when: docker_binary_path.rc != 0
+  when: not ansible_check_mode
+
+- name: Set Docker Binary Variable
+  ansible.builtin.set_fact:
+    docker_binary: "{{ docker_binary_path.stdout | default('/usr/bin/docker') }}"

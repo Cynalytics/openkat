@@ -1,0 +1,35 @@
+---
+
+- name: Create /etc/openkat directory
+  ansible.builtin.file:
+    path: /etc/openkat
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Create data directory parts
+  ansible.builtin.include_tasks: mkdir-p.yml
+  when: item is defined and item  != ''
+  loop:
+    - "{{ openkat_data_directory }}"
+    - "{{ openkat_service_root }}"
+
+- name: Create Data Subdirectories
+  ansible.builtin.file:
+    path: "{{ openkat_data_directory }}/{{ item }}"
+    state: directory
+    owner: lxd
+    group: docker
+    # owner: "{{ lookup('vars', item + '_user_id') }}"
+    # group: "{{ lookup('vars', item + '_group_id') }}"
+    mode: '0755'
+  with_items:
+    - bytes
+    - crux
+    - katalogus
+    - mula
+    - postgres
+    - rabbitmq
+  notify: 'Restart openkat_{{ item }} service'
+  when: openkat_data_directory is defined and openkat_data_directory != ''

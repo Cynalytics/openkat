@@ -1,0 +1,27 @@
+# {{ ansible_managed }}
+http:
+  middlewares:
+    security-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customResponseHeaders:
+          X-Permitted-Cross-Domain-Policies: "none"
+          Cross-Origin-Opener-Policy: "same-origin"
+          Cross-Origin-Resource-Policy: "same-origin"
+          Cache-Control: "no-store, max-age=0"
+        stsSeconds: 31104000
+        stsIncludeSubdomains: true
+        contentSecurityPolicy: "default-src 'self'; object-src 'none'; frame-ancestors 'none'"
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      sniStrict: true

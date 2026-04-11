@@ -1,0 +1,46 @@
+# {{ ansible_managed }}
+services:
+  mula:
+    hostname: mula
+    restart: on-failure
+    mem_limit: 512m
+    cpus: 1.0
+    ports:
+      - "127.0.0.1:8004:8000"
+    image: "{{ openkat_docker_repository }}/openkat-mula:{{ openkat_mula_version }}"
+    environment:
+    - DATABASE_MIGRATION=true
+    - QUEUE_URI=amqp://{{ openkat_rabbitmq_user }}:{{ openkat_rabbitmq_password }}@rabbitmq:5672/{{ openkat_rabbitmq_vhost }}
+    - BYTES_PASSWORD={{ openkat_bytes_password }}
+    - OCTOPOES_API=http://octopoesapi:80
+    - BYTES_API=http://bytes:8000
+    - BYTES_USERNAME={{ openkat_bytes_user }}
+    - KATALOGUS_API=http://katalogus:8000
+    - SCHEDULER_DB={{ openkat_mula_database }}
+    - SCHEDULER_DB_USER={{ openkat_mula_user }}
+    - SCHEDULER_DB_PASSWORD={{ openkat_mula_password }}
+    - SCHEDULER_DB_URI=postgresql://{{ openkat_mula_user }}:{{ openkat_mula_password }}@postgres:5432/{{ openkat_mula_database }}
+    volumes:
+      - mula-data:/data
+    networks:
+      openkatinternalnetwork:
+        aliases:
+          - mula
+
+
+networks:
+  openkatinternalnetwork:
+    external: true
+
+volumes:
+  mula-data:
+{% if openkat_data_directory
+ is defined and openkat_data_directory != '' %}
+
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ openkat_data_directory }}/mula
+      o: bind
+  {% endif %}
+

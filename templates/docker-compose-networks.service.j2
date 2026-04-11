@@ -1,0 +1,13 @@
+[Unit]
+Description=Docker-compose-networks in Docker-compose ({{ openkat_service_root }}/docker-compose-networks)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory={{ openkat_service_root }}/docker-compose-networks
+ExecStart={{ docker_binary}} compose -f {{ openkat_service_root }}/docker-compose-networks/docker-compose.yml --all-resources up
+ExecStop={{ docker_binary}} compose -f {{ openkat_service_root }}/docker-compose-networks/docker-compose.yml --all-resources stop
+
+[Install]
+WantedBy=multi-user.target

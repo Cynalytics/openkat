@@ -1,0 +1,34 @@
+# {{ ansible_managed }}
+services:
+  rockyworker:
+    hostname: rockyworker
+    restart: on-failure
+    mem_limit: 512m
+    cpus: 1.0
+    image: "{{ openkat_docker_repository }}/openkat-rocky:{{ openkat_rocky_worker_version }}"
+    command: ["worker"]
+    environment:
+      - DATABASE_MIGRATION=true
+      - DEBUG={{ openkat_rocky_worker_debug }}
+      - TWOFACTOR_ENABLED={{ openkat_rocky_worker_2fa }}
+      - ROCKY_DB_DSN=postgresql://{{ openkat_rocky_user }}:{{ openkat_rocky_password }}@postgres:5432/{{ openkat_rocky_database }}
+      - BYTES_API=http://bytes:8000
+      - BYTES_USERNAME={{ openkat_bytes_user }}
+      - BYTES_PASSWORD={{ openkat_bytes_password }}
+      - SCHEDULER_API=http://mula:8000
+      - KATALOGUS_API=http://katalogus:8000
+      - OCTOPOES_API=http://octopoesapi:80
+      - SECRET_KEY={{ openkat_rocky_secret }}
+      - DJANGO_SUPERUSER_EMAIL={{ openkat_superuser_email }}
+      - DJANGO_SUPERUSER_FULL_NAME={{ openkat_superuser_fullname }}
+      - DJANGO_ALLOWED_HOSTS={{ inventory_hostname }},localhost
+      - DJANGO_CSRF_TRUSTED_ORIGINS=https://{{ inventory_hostname }}
+      - QUEUE_URI=amqp://{{ openkat_rabbitmq_user }}:{{ openkat_rabbitmq_password }}@rabbitmq:5672/{{ openkat_rabbitmq_vhost }}
+    networks:
+      openkatinternalnetwork:
+        aliases:
+          - rockyworker
+
+networks:
+  openkatinternalnetwork:
+    external: true

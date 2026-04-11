@@ -1,0 +1,55 @@
+---
+- name: OpenKAT preflight checks
+  ansible.builtin.include_tasks: preflight_checks.yml
+
+- name: OpenKAT variables
+  ansible.builtin.include_tasks: set_variables.yml
+
+- name: OpenKAT directories
+  ansible.builtin.include_tasks: directories.yml
+
+- name: OpenKAT passwords
+  ansible.builtin.include_tasks: passwords.yml
+
+# order is important, as some roles depend on other roles
+- name: OpenKAT docker compose networks
+  ansible.builtin.include_tasks: docker_compose_networks.yml
+
+- name: OpenKAT Traefik reverse proxy
+  ansible.builtin.include_tasks: traefik.yml
+
+- name: OpenKAT postgres
+  ansible.builtin.include_tasks: postgres.yml
+
+- name: OpenKAT rabbitmq
+  ansible.builtin.include_tasks: rabbitmq.yml
+
+- name: OpenKAT bytes
+  ansible.builtin.include_tasks: bytes.yml
+
+- name: OpenKAT boefje
+  ansible.builtin.include_tasks: boefje.yml
+
+- name: OpenKAT crux
+  ansible.builtin.include_tasks: crux.yml
+
+- name: OpenKAT katalogus
+  ansible.builtin.include_tasks: katalogus.yml
+
+- name: OpenKAT normalizer
+  ansible.builtin.include_tasks: normalizer.yml
+
+- name: OpenKAT octopoes api
+  ansible.builtin.include_tasks: octopoes_api.yml
+
+- name: OpenKAT octopoes api worker
+  ansible.builtin.include_tasks: octopoes_api_worker.yml
+
+- name: OpenKAT mula
+  ansible.builtin.include_tasks: mula.yml
+
+- name: OpenKAT rocky
+  ansible.builtin.include_tasks: rocky.yml
+
+- name: OpenKAT rocky worker
+  ansible.builtin.include_tasks: rocky_worker.yml

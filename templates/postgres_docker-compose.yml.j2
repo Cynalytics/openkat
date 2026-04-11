@@ -1,0 +1,39 @@
+# {{ ansible_managed }}
+---
+services:
+  postgres:
+    hostname: postgres
+    image: docker.io/library/postgres:{{ openkat_postgres_version }}
+    command: " {{ openkat_postgres_run_options }}"
+    restart: on-failure
+    mem_limit: 1g
+    cpus: 2.0
+    shm_size: 256MB
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+      - /var/run/postgresql:/var/run/postgresql
+    environment:
+      APPS: "ROCKY BYTES KATALOGUS SCHEDULER"
+      POSTGRES_PASSWORD: "{{ openkat_postgres_password }}"
+      POSTGRES_USER: "{{ openkat_postgres_admin_user }}"
+    networks:
+      openkatinternalnetwork:
+        aliases:
+          - postgres
+
+networks:
+  openkatinternalnetwork:
+    external: true
+
+volumes:
+  postgres-data:
+{% if openkat_data_directory is defined and openkat_data_directory != '' %}
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ openkat_data_directory }}/postgres
+      o: bind
+  {% endif %}

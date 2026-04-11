@@ -1,0 +1,17 @@
+[Unit]
+Description=OpenKat RabbitMQ in Docker-compose ({{ openkat_service_root }}/rabbitmq)
+Requires=docker.service
+After=docker.service
+Requires=traefik.service
+Requires=docker-compose-networks.service
+
+[Service]
+Restart=always
+WorkingDirectory={{ openkat_service_root }}/rabbitmq
+TimeoutStartSec=2min
+ExecStartPre={{ docker_binary }} compose  -f {{ openkat_service_root }}/rabbitmq/docker-compose.yml pull
+ExecStart={{ docker_binary }} compose -f {{ openkat_service_root }}/rabbitmq/docker-compose.yml up
+ExecStop={{ docker_binary }} compose -f {{ openkat_service_root }}/rabbitmq/docker-compose.yml stop
+
+[Install]
+WantedBy=multi-user.target

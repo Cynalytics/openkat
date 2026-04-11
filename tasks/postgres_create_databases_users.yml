@@ -1,0 +1,37 @@
+---
+- name: Create  databases
+  community.postgresql.postgresql_db:
+    login_user: "{{ openkat_postgres_admin_user }}"
+    name: "{{ item }}"
+  with_items:
+    - "{{ openkat_rocky_database }}"
+    - "{{ openkat_katalogus_database }}"
+    - "{{ openkat_bytes_database }}"
+    - "{{ openkat_mula_database }}"
+
+- name: "Create database users"
+  community.postgresql.postgresql_user:
+    login_user: "{{ openkat_postgres_admin_user }}"
+    db: "{{ item.db }}"
+    name: "{{ item.user }}"
+    password: "{{ item.password }}"
+  no_log: true # do not log passwords
+  with_items:
+    - { db: "{{ openkat_rocky_database }}", user: "{{ openkat_rocky_user }}", password: "{{ openkat_rocky_password }}" }
+    - { db: "{{ openkat_katalogus_database }}", user: "{{ openkat_katalogus_user }}", password: "{{ openkat_katalogus_password }}" }
+    - { db: "{{ openkat_bytes_database }}", user: "{{ openkat_bytes_user }}", password: "{{ openkat_bytes_password }}" }
+    - { db: "{{ openkat_mula_database }}", user: "{{ openkat_mula_user }}", password: "{{ openkat_mula_password }}" }
+
+
+- name: "Set database owners"
+  community.postgresql.postgresql_owner:
+    login_user: "{{ openkat_postgres_admin_user }}"
+    login_db: "{{ item.db }}"
+    obj_name: "{{ item.db }}"
+    new_owner: "{{ item.user }}"
+    obj_type: database
+  with_items:
+    - { db: "{{ openkat_rocky_database }}", user: "{{ openkat_rocky_user }}" }
+    - { db: "{{ openkat_katalogus_database }}", user: "{{ openkat_katalogus_user }}" }
+    - { db: "{{ openkat_bytes_database }}", user: "{{ openkat_bytes_user }}" }
+    - { db: "{{ openkat_mula_database }}", user: "{{ openkat_mula_user }}" }

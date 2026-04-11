@@ -1,0 +1,40 @@
+---
+- name: Copy OpenKAT management script
+  ansible.builtin.copy:
+    src: openkat_rocky_dockercompose__manage_openkat.py
+    dest: /usr/local/sbin/manage_openkat
+    mode: '0700'
+    owner: root
+    group: root
+
+- name: Install bash completion for manage_openkat
+  ansible.builtin.copy:
+    src: openkat_rocky_dockercompose__manage_openkat_completion.bash
+    dest: /etc/bash_completion.d/manage_openkat
+    mode: '0644'
+    owner: root
+    group: root
+
+
+# Services need to be restarted when passwords have been rotated, otherwise the manage_openkat script
+# will not be able to connect to the database and create the superuser.
+- name: Restart services when needed
+  ansible.builtin.meta: flush_handlers
+
+- name: Create Rocky superuser when needed
+  ansible.builtin.command:
+    argv:
+      - /usr/local/sbin/manage_openkat
+      # global options before the actual command
+      - --compose-file
+      - "{{ openkat_service_root }}/rocky/docker-compose.yml"
+      - create
+      - --password
+      - "{{ openkat_rocky_superuser_password }}"
+      - --email
+      - "{{ openkat_superuser_email }}"
+      - --only-if-no-superuser-present
+  register: create_superuser_result
+  changed_when: '"already exist" not in create_superuser_result.stdout'
+  failed_when: create_superuser_result.rc != 0
+  when: not ansible_check_mode

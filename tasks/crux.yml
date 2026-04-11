@@ -1,0 +1,47 @@
+---
+- name: Create srv directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - "{{ openkat_service_root }}/"
+    - "{{ openkat_service_root }}/crux/"
+
+- name: Create compose file
+  ansible.builtin.template:
+    src: "crux_docker-compose.yml.j2"
+    dest: "{{ openkat_service_root }}/crux/docker-compose.yml"
+    owner: root
+    group: root
+    mode: '0640'
+  notify: Restart openkat_crux service
+
+- name: Create systemd Unit file for crux service
+  ansible.builtin.template:
+    src: "crux.service.j2"
+    dest: /etc/systemd/system/openkat_crux.service
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart openkat_crux service
+
+- name: Enable openkat_crux service
+  ansible.builtin.systemd:
+    name: openkat_crux.service
+    enabled: true
+    daemon_reload: true # In case the service file was changed
+    state: started
+    no_block: true
+
+- name: Wait until crux service is active (might take a few tries as it needs to pull the docker image on first run)
+  ansible.builtin.systemd:
+    name: openkat_crux.service
+  register: svc_state
+  retries: 25
+  delay: 10
+  until: svc_state.status.ActiveState == 'active'
+  changed_when: false
+  when: not ansible_check_mode

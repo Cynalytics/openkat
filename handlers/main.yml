@@ -1,0 +1,74 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart openkat_boefje service
+  ansible.builtin.systemd:
+    name: openkat_boefje.service
+    state: restarted
+
+- name: Restart openkat_bytes service
+  ansible.builtin.systemd:
+    name: openkat_bytes.service
+    state: restarted
+
+- name: Restart openkat_crux service
+  ansible.builtin.systemd:
+    name: openkat_crux.service
+    state: restarted
+
+- name: Restart openkat_katalogus service
+  ansible.builtin.systemd:
+    name: openkat_katalogus.service
+    state: restarted
+
+- name: Restart openkat_mula service
+  ansible.builtin.systemd:
+    name: openkat_mula.service
+    state: restarted
+
+- name: Restart openkat_normalizer service
+  ansible.builtin.systemd:
+    name: openkat_normalizer.service
+    state: restarted
+
+- name: Restart openkat_octopoesapi service
+  ansible.builtin.systemd:
+    name: openkat_octopoesapi.service
+    state: restarted
+
+- name: Restart openkat_octopoesapiworker service
+  ansible.builtin.systemd:
+    name: openkat_octopoesapiworker.service
+    state: restarted
+
+- name: Restart openkat_postgres service
+  ansible.builtin.systemd:
+    name: openkat_postgres.service
+    state: restarted
+
+- name: Restart openkat_rabbitmq service
+  ansible.builtin.systemd:
+    name: openkat_rabbitmq.service
+    state: restarted
+
+- name: Restart openkat_rocky service
+  ansible.builtin.systemd:
+    name: openkat_rocky.service
+    state: restarted
+
+- name: Restart openkat_rockyworker service
+  ansible.builtin.systemd:
+    name: openkat_rockyworker.service
+    state: restarted
+
+- name: Restart traefik service
+  ansible.builtin.systemd:
+    name: traefik.service
+    state: restarted
+
+- name: Restart docker-compose-networks service
+  ansible.builtin.systemd:
+    name: docker-compose-networks.service
+    state: restarted

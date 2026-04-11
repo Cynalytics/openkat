@@ -1,0 +1,25 @@
+---
+# outer loop for creating users and groups
+
+- name: "Create group {{ item }}"
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+
+- name: "Create user {{ item }}"
+  ansible.builtin.user:
+    name: "{{ item }}"
+    state: present
+    group: "{{ item }}"
+    shell: /usr/sbin/nologin
+    create_home: false
+
+- name: "Get userID for user {{ item }}"
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ item }}"
+
+- name: "Set fact for user ID {{ item }} "
+  ansible.builtin.set_fact:
+    "{{ item }}_user_id": "{{ getent_passwd[item][1] }}"
+    "{{ item }}_group_id": "{{ getent_passwd[item][2] }}"

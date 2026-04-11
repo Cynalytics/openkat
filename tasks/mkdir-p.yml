@@ -1,0 +1,22 @@
+---
+
+- name: Split Directory Into Parts
+  ansible.builtin.set_fact:
+    mkdir_p_path_parts: >
+      {%- set segments = item | regex_replace('^/+', '') | split('/') -%}
+      {%- set out = [] -%}
+      {%- for i in range(1, (segments | length) + 1) -%}
+      {%-   set _ = out.append('/' ~ (segments[:i] | join('/'))) -%}
+      {%- endfor -%}
+      {{ out }}
+
+- name: Create directory parts
+  ansible.builtin.file:
+    path: "{{ inner_item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop: "{{ mkdir_p_path_parts }}"
+  loop_control:
+    loop_var: inner_item

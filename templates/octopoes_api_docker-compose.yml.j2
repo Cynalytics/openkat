@@ -1,0 +1,26 @@
+# {{ ansible_managed }}
+services:
+  octopoesapi:
+    hostname: octopoesapi
+    restart: on-failure
+    mem_limit: 512m
+    cpus: 1.0
+    command: ["web"]
+    ports:
+      - "127.0.0.1:8001:80"
+    image: "{{ openkat_docker_repository }}/openkat-octopoes:{{ openkat_octopoes_api_version }}"
+    environment:
+      - QUEUE_URI=amqp://{{ openkat_rabbitmq_user }}:{{ openkat_rabbitmq_password }}@rabbitmq:5672/{{ openkat_rabbitmq_vhost }}
+      - XTDB_URI=http://crux:3000
+      - KATALOGUS_API=http://katalogus:8000
+      - BYTES_USERNAME="{{ openkat_bytes_user }}"
+      - BYTES_PASSWORD="{{ openkat_bytes_password }}"
+    networks:
+      openkatinternalnetwork:
+        aliases:
+          # note: do not use octopoesapi here, as that breaks service discovery in some cases
+          - octopoesapi
+
+networks:
+  openkatinternalnetwork:
+    external: true

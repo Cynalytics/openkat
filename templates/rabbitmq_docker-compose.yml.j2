@@ -1,0 +1,41 @@
+# {{ ansible_managed }}
+---
+services:
+  rabbitmq:
+    hostname: rabbitmq
+    restart: on-failure
+    mem_limit: 512m
+    cpus: 1.0
+    image: "docker.io/library/rabbitmq:{{ openkat_rabbitmq_version }}"
+    ports:
+      - "127.0.0.1:5672:5672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq/mnesia/
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      retries: 25
+    environment:
+      RABBITMQ_DEFAULT_USER: "{{ openkat_rabbitmq_user }}"
+      RABBITMQ_DEFAULT_PASS: "{{ openkat_rabbitmq_password }}"
+      RABBITMQ_DEFAULT_VHOST: "{{ openkat_rabbitmq_vhost }}"
+    networks:
+      openkatinternalnetwork:
+        aliases:
+          - rabbitmq
+
+networks:
+  openkatinternalnetwork:
+    external: true
+
+volumes:
+  rabbitmq-data:
+{% if openkat_data_directory
+ is defined and openkat_data_directory != '' %}
+
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ openkat_data_directory }}/rabbitmq
+      o: bind
+  {% endif %}

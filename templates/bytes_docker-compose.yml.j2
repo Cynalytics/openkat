@@ -1,0 +1,43 @@
+# {{ ansible_managed }}
+services:
+  bytes:
+    hostname: bytes
+    restart: on-failure
+    mem_limit: 512m
+    cpus: 1.0
+    ports:
+      - "127.0.0.1:8002:8000"
+    image: "{{ openkat_docker_repository }}/openkat-bytes:{{ openkat_bytes_version }}"
+    environment:
+      - DATABASE_MIGRATION=true
+      - BYTES_DATA_DIR=/data
+      - BYTES_SECRET={{ openkat_bytes_secret }}
+      - BYTES_USERNAME={{ openkat_bytes_user }}
+      - BYTES_PASSWORD={{ openkat_bytes_password }}
+      - BYTES_DB={{ openkat_bytes_database }}
+      - BYTES_DB_USER={{ openkat_bytes_user }}
+      - BYTES_DB_PASSWORD={{ openkat_bytes_password }}
+      - QUEUE_URI=amqp://{{ openkat_rabbitmq_user }}:{{ openkat_rabbitmq_password }}@rabbitmq:5672/{{ openkat_rabbitmq_vhost }}
+      - BYTES_DB_URI=postgresql://{{ openkat_bytes_user }}:{{ openkat_bytes_password }}@postgres:5432/{{ openkat_bytes_database}}
+    volumes:
+      - bytes-data:/data
+    networks:
+      openkatinternalnetwork:
+        aliases:
+          - bytes
+
+networks:
+  openkatinternalnetwork:
+    external: true
+
+volumes:
+  bytes-data:
+{% if openkat_data_directory
+ is defined and openkat_data_directory != '' %}
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ openkat_data_directory }}/bytes
+      o: bind
+{% endif %}
+

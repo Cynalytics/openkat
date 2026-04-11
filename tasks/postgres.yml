@@ -1,0 +1,61 @@
+---
+
+- name: Install local packages for postgres
+  ansible.builtin.include_tasks: postgres_install_packages.yml
+
+- name: Set up environment for BackupNinja
+  ansible.builtin.include_tasks: postgres_backupninja.yml
+  when: openkat_backupninja_enabled
+
+- name: Create srv directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - "{{ openkat_service_root }}/"
+    - "{{ openkat_service_root }}/postgres/"
+
+- name: Create compose file
+  ansible.builtin.template:
+    src: "postgres_docker-compose.yml.j2"
+    dest: "{{ openkat_service_root }}/postgres/docker-compose.yml"
+    mode: '0640'
+    owner: root
+    group: root
+  notify: Restart openkat_postgres service
+
+- name: Create systemd Unit file for postgres service
+  ansible.builtin.template:
+    src: "postgres.service.j2"
+    dest: /etc/systemd/system/openkat_postgres.service
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart openkat_postgres service
+
+# The first start of the postgres service may take a while because of pulling
+# the docker image, so we set no_block to true
+- name: Enable openkat_postgres service
+  ansible.builtin.systemd:
+    name: openkat_postgres.service
+    enabled: true
+    daemon_reload: true # In case the service file was changed
+    state: started
+    no_block: true
+
+- name: Wait until postgres service is active (might take a few tries as it needs to pull the docker image on first run)
+  ansible.builtin.systemd:
+    name: openkat_postgres.service
+  register: svc_state
+  retries: 25
+  delay: 10
+  until: svc_state.status.ActiveState == 'active'
+  changed_when: false
+  when: not ansible_check_mode
+
+
+- name: Create Postgresql Databases and Users
+  ansible.builtin.include_tasks: postgres_create_databases_users.yml

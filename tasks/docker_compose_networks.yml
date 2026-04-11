@@ -1,0 +1,37 @@
+---
+- name: Create srv directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - "{{ openkat_service_root }}/"
+    - "{{ openkat_service_root }}/docker-compose-networks/"
+
+- name: Create compose file for docker-compose-networks
+  ansible.builtin.template:
+    src: docker_compose_networks_docker-compose.yml.j2
+    dest: "{{ openkat_service_root }}/docker-compose-networks/docker-compose.yml"
+    mode: '0644'
+  notify: Restart docker-compose-networks service
+
+- name: Create systemd Unit file for docker-compose-networks service
+  ansible.builtin.template:
+    src: docker-compose-networks.service.j2
+    dest: /etc/systemd/system/docker-compose-networks.service
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart docker-compose-networks service
+
+- name: Enable docker-compose-networks service
+  ansible.builtin.systemd:
+    name: docker-compose-networks.service
+    enabled: true
+    daemon_reload: true # In case the service file was changed
+    state: started
+  changed_when: false
+  # We don't want Ansible to report a change
+  # docker-compose-networks is a oneshot service, so we don't mention restarts as changes in Ansible

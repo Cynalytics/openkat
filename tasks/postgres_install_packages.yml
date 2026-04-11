@@ -1,0 +1,17 @@
+---
+- name: Add apt key for PostgreSQL apt repository
+  ansible.builtin.apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add PostgreSQL apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+    state: present
+
+- name: Install PostgreSQL client packages
+  ansible.builtin.package:
+    name:
+      - postgresql-client-15
+      - python3-psycopg2
+    state: present

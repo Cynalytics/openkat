@@ -1,0 +1,29 @@
+# {{ ansible_managed }}
+services:
+  normalizer:
+    hostname: normalizer
+    restart: on-failure
+    mem_limit: 512m
+    cpus: 1.0
+    command: ["normalizer"]
+    image: "{{ openkat_docker_repository }}/openkat-boefjes:{{ openkat_normalizer_version }}"
+    deploy:
+      replicas: 1
+    environment:
+      - DATABASE_MIGRATION=true
+      - KATALOGUS_DB_URI=postgresql://{{ openkat_katalogus_user }}:{{ openkat_katalogus_password }}@postgres:5432/{{ openkat_katalogus_database }}
+      - SCHEDULER_API=http://mula:8000
+      - KATALOGUS_API=http://katalogus:8000
+      - OCTOPOES_API=http://octopoesapi:80
+      - BYTES_API=http://bytes:8000
+      - BYTES_USERNAME={{ openkat_bytes_user }}
+      - BYTES_PASSWORD={{ openkat_bytes_password }}
+      - BOEFJES_API=http://boefje:8000
+    networks:
+      openkatinternalnetwork:
+        aliases:
+          - normalizer
+
+networks:
+  openkatinternalnetwork:
+    external: true

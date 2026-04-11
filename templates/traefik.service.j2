@@ -1,0 +1,15 @@
+[Unit]
+Description=Traefik in Docker-compose ({{ openkat_service_root }}/traefik)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+WorkingDirectory={{ openkat_service_root }}/traefik
+TimeoutStartSec=2min
+ExecStartPre={{ docker_binary }} compose  -f {{ openkat_service_root }}/traefik/docker-compose.yml pull
+ExecStart={{ docker_binary }} compose -f {{ openkat_service_root }}/traefik/docker-compose.yml up
+ExecStop={{ docker_binary }} compose -f {{ openkat_service_root }}/traefik/docker-compose.yml stop
+
+[Install]
+WantedBy=multi-user.target

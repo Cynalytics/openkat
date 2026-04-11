@@ -1,0 +1,50 @@
+---
+- name: Create srv directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - "{{ openkat_service_root }}/"
+    - "{{ openkat_service_root }}/rocky/"
+
+- name: Create compose file
+  ansible.builtin.template:
+    src: "rocky_docker-compose.yml.j2"
+    dest: "{{ openkat_service_root }}/rocky/docker-compose.yml"
+    owner: root
+    group: root
+    mode: '0640'
+  notify: Restart openkat_rocky service
+
+- name: Create systemd Unit file for rocky service
+  ansible.builtin.template:
+    src: "rocky.service.j2"
+    dest: /etc/systemd/system/openkat_rocky.service
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart openkat_rocky service
+
+- name: Enable openkat_rocky service
+  ansible.builtin.systemd:
+    name: openkat_rocky.service
+    enabled: true
+    daemon_reload: true
+    state: started
+    no_block: true
+
+- name: Wait until rocky service is active (might take a few tries as it needs to pull the docker image on first run)
+  ansible.builtin.systemd:
+    name: openkat_rocky.service
+  register: svc_state
+  retries: 25
+  delay: 10
+  until: svc_state.status.ActiveState == 'active'
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Create Django superuser when needed
+  ansible.builtin.include_tasks: rocky_create_superuser.yml

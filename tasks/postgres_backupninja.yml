@@ -1,0 +1,44 @@
+---
+- name: Make sure postgres user exists
+  ansible.builtin.user:
+    name: postgres
+    state: present
+    shell: /bin/bash
+    create_home: true
+    home: /home/postgres
+
+- name: Install backupninja package
+  ansible.builtin.apt:
+    name: backupninja
+    state: present
+    update_cache: true
+
+- name: Install needed config files
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/{{ item }}"
+    owner: root
+    group: root
+    mode: '0600'
+  with_items:
+    - etc/backup.d/20.pgsql
+    - etc/backupninja.conf
+
+- name: Create credentials file for BackupNinja
+  ansible.builtin.template:
+    src: postgres_pgpass.j2
+    dest: /home/postgres/.pgpass
+    owner: postgres
+    group: postgres
+    mode: '0600'
+
+- name: Set permissions for backupninja backup directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+  with_items:
+    - "{{ openkat_data_directory }}/backups/"
+    - "{{ openkat_data_directory }}/backups/postgres"

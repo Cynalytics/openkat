@@ -1,0 +1,45 @@
+---
+- name: Create srv directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  with_items:
+    - "{{ openkat_service_root }}/"
+    - "{{ openkat_service_root }}/rabbitmq/"
+
+- name: Create compose file
+  ansible.builtin.template:
+    src: "rabbitmq_docker-compose.yml.j2"
+    dest: "{{ openkat_service_root }}/rabbitmq/docker-compose.yml"
+    mode: '0640'
+  notify: Restart openkat_rabbitmq service
+
+- name: Create systemd Unit file for rabbitmq service
+  ansible.builtin.template:
+    src: "rabbitmq.service.j2"
+    dest: /etc/systemd/system/openkat_rabbitmq.service
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart openkat_rabbitmq service
+
+# The first start of the RabbitMQ service may take a while because of pulling
+# the docker image, so we set no_block to true
+- name: Enable openkat_rabbitmq service
+  ansible.builtin.systemd:
+    name: openkat_rabbitmq.service
+    enabled: true
+    daemon_reload: true # In case the service file was changed
+    state: started
+    no_block: true
+
+- name: Wait until RabbitMQ service is active (might take a few tries as it needs to pull the docker image on first run)
+  ansible.builtin.systemd:
+    name: openkat_rabbitmq.service
+  register: svc_state
+  retries: 25
+  delay: 10
+  until: svc_state.status.ActiveState == 'active'
+  changed_when: false
+  when: not ansible_check_mode

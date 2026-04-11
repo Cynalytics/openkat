@@ -1,0 +1,39 @@
+# {{ ansible_managed }}
+services:
+  boefje:
+    hostname: boefje
+    restart: on-failure
+    mem_limit: 1g
+    cpus: 2.0
+    command: ["boefje"]
+    ports:
+      - "127.0.0.1:8006:8000"
+    image: "{{ openkat_docker_repository }}/openkat-boefjes:{{ openkat_boefje_version }}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      replicas: 1
+    environment:
+      - BOEFJES_API=http://boefje:8000
+      - KATALOGUS_API=http://katalogus:8000
+      - KATALOGUS_DB_URI=postgresql://{{ openkat_katalogus_user }}:{{ openkat_katalogus_password }}@postgres:5432/{{ openkat_katalogus_database }}
+      - BOEFJES_DOCKER_NETWORK=boefjesnetwork
+      - SCHEDULER_API=http://mula:8000
+      - OCTOPOES_API=http://octopoesapi:80
+      - BYTES_API=http://bytes:8000
+      - BYTES_USERNAME={{ openkat_bytes_user }}
+      - BYTES_PASSWORD={{ openkat_bytes_password }}
+      - QUEUE_URI=amqp://{{ openkat_rabbitmq_user }}:{{ openkat_rabbitmq_password }}@rabbitmq:5672/{{ openkat_rabbitmq_vhost }}
+    networks:
+      openkatinternalnetwork:
+        aliases:
+          - boefje
+      boefjesnetwork:
+        aliases:
+          - boefje
+
+networks:
+  openkatinternalnetwork:
+    external: true
+  boefjesnetwork:
+    external: true

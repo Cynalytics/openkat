@@ -1,0 +1,58 @@
+---
+# which release of openkat to install, this will be used for all components, but can be overridden per component if needed
+openkat_version: &openkat_version 'v1.21.0'
+# where to pull the OpenKAT docker images from, this should be a repository that contains the OpenKAT images with the same tags as the openkat_version variable
+openkat_docker_repository: 'docker.underdark.nl/librekat'
+openkat_crux_version: 'v1.1.0'
+# where the OpenKAT services should be installed
+openkat_service_root: '/srv'
+# where OpenKAT should store its data, this will be mounted into the containers and should be a location with enough storage capacity
+# ideally this should be on a separate disk from the OS
+openkat_data_directory: '/data'
+# Use BackupNinja to back up the Postgres data, this will create a backup of the Postgres data every day
+openkat_backupninja_enabled: true
+# How many days to rotate passwords for OpenKat services. This will be applied only during Ansible runs
+# 0 means no rotation
+openkat_persistent_password_rotate_days: 30
+
+# Normally nothing needs to be changed below this line
+openkat_boefje_version: *openkat_version
+openkat_bytes_version: *openkat_version
+openkat_katalogus_version: *openkat_version
+openkat_mula_version: *openkat_version
+openkat_normalizer_version: *openkat_version
+openkat_octopoes_api_version: *openkat_version
+openkat_octopoes_api_worker_version: *openkat_version
+openkat_rocky_version: *openkat_version
+openkat_rocky_worker_version: *openkat_version
+
+openkat_rocky_database: 'rocky_db'
+openkat_rocky_user: 'rocky'
+openkat_katalogus_database: 'katalogus_db'
+openkat_katalogus_user: 'katalogus'
+openkat_bytes_database: 'bytes_db'
+openkat_bytes_user: 'bytes'
+openkat_mula_database: 'mula_db'
+openkat_mula_user: 'mula'
+openkat_rabbitmq_user: 'kat'
+openkat_rabbitmq_vhost: 'kat'
+
+openkat_postgres_version: 15
+openkat_postgres_run_options: "-c listen_addresses='*'"
+openkat_postgres_admin_user: 'postgres'
+
+openkat_rabbitmq_version: '3.12'
+
+openkat_rocky_debug: false
+openkat_rocky_2fa: true
+openkat_rocky_worker_debug: false
+openkat_rocky_worker_2fa: false
+
+openkat_superuser_fullname: ''
+openkat_superuser_email: ''
+openkat_traefik_letsencrypt_admin_email: ''
+
+openkat_required_vars:
+  - openkat_superuser_fullname
+  - openkat_superuser_email
+  - openkat_traefik_letsencrypt_admin_email

@@ -1,0 +1,33 @@
+# {{ ansible_managed }}
+services:
+  crux:
+    hostname: crux
+    restart: on-failure
+    mem_limit: 1g
+    cpus: 2.0
+    ports:
+      - "127.0.0.1:3000:3000"
+    image: "ghcr.io/dekkers/xtdb-http-multinode:{{ openkat_crux_version }}"
+    volumes:
+      - xtdb-data:/var/lib/xtdb
+    networks:
+      openkatinternalnetwork:
+        aliases:
+          - crux
+
+networks:
+  openkatinternalnetwork:
+    external: true
+
+volumes:
+  xtdb-data:
+{% if openkat_data_directory
+ is defined and openkat_data_directory != '' %}
+
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ openkat_data_directory }}/crux
+      o: bind
+  {% endif %}
+

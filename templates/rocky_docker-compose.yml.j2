@@ -1,0 +1,44 @@
+# {{ ansible_managed }}
+services:
+  rocky:
+    hostname: rocky
+    restart: on-failure
+    mem_limit: 2g
+    cpus: 1.0
+    ports:
+      - "127.0.0.1:8000:8000"
+    image: "{{ openkat_docker_repository }}/openkat-rocky:{{ openkat_rocky_version }}"
+    environment:
+      - DATABASE_MIGRATION=true
+      - DEBUG={{ openkat_rocky_debug }}
+      - TWOFACTOR_ENABLED={{ openkat_rocky_2fa }}
+      - ROCKY_DB_DSN=postgresql://{{ openkat_rocky_user }}:{{ openkat_rocky_password }}@postgres:5432/{{ openkat_rocky_database }}
+      - BYTES_API=http://bytes:8000
+      - BYTES_USERNAME={{ openkat_bytes_user }}
+      - BYTES_PASSWORD={{ openkat_bytes_password }}
+      - SCHEDULER_API=http://mula:8000
+      - KATALOGUS_API=http://katalogus:8000
+      - OCTOPOES_API=http://octopoesapi:80
+      - SECRET_KEY={{ openkat_rocky_secret }}
+      - DJANGO_SUPERUSER_EMAIL={{ openkat_superuser_email }}
+      - DJANGO_SUPERUSER_FULL_NAME={{ openkat_superuser_fullname }}
+      - DJANGO_ALLOWED_HOSTS={{ inventory_hostname }},localhost
+      - DJANGO_CSRF_TRUSTED_ORIGINS=https://{{ inventory_hostname }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rocky-rocky.rule=Host(`{{ inventory_hostname }}`)"
+      - "traefik.http.routers.rocky-rocky.entrypoints=websecure"
+      - "traefik.http.routers.rocky-rocky.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.rocky-rocky.middlewares=security-headers@file,rate-limit@file"
+      - "traefik.http.services.rocky-rocky.loadbalancer.server.port=8000"
+      - "traefik.docker.network=openkatinternalnetwork"
+
+    networks:
+      openkatinternalnetwork:
+        aliases:
+          - rocky
+
+networks:
+  openkatinternalnetwork:
+    external: true
+

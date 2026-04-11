@@ -1,0 +1,34 @@
+---
+- name: Check Docker is installed
+  ansible.builtin.command: which docker
+  register: docker_check
+  changed_when: false
+  failed_when: docker_check.rc != 0
+  when: not ansible_check_mode
+
+- name: Abort if Docker is not installed
+  ansible.builtin.fail:
+    msg: "Docker is not installed. Please install Docker before running this role."
+  when:
+    - not ansible_check_mode
+    - docker_check.rc != 0
+
+- name: Check Docker Compose is installed
+  ansible.builtin.command: docker compose version
+  register: docker_compose_check
+  changed_when: false
+  failed_when: docker_compose_check.rc != 0
+  when: not ansible_check_mode
+
+- name: Abort if Docker Compose is not installed
+  ansible.builtin.fail:
+    msg: "Docker Compose is not installed. Please install Docker Compose before running this role."
+  when:
+    - not ansible_check_mode
+    - docker_compose_check.rc != 0
+
+- name: Check For Variables That Are Required But Do Not Have Defaults
+  ansible.builtin.assert:
+    that: "{{ item }} is defined and {{ item }} != ''"
+    fail_msg: "Variable {{ item }} is required but not defined. Please define it in your inventory or group_vars."
+  loop: "{{ openkat_required_vars }}"

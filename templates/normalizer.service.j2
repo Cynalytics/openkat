@@ -1,0 +1,19 @@
+[Unit]
+Description=OpenKat normalizer in Docker-compose ({{ openkat_service_root }}/normalizer)
+Requires=docker.service
+After=docker.service
+Requires=traefik.service
+Requires=docker-compose-networks.service
+Requires=openkat_bytes.service
+Requires=openkat_rabbitmq.service
+
+[Service]
+Restart=always
+WorkingDirectory={{ openkat_service_root }}/normalizer
+TimeoutStartSec=2min
+ExecStartPre={{ docker_binary }} compose  -f {{ openkat_service_root }}/normalizer/docker-compose.yml pull
+ExecStart={{ docker_binary }} compose -f {{ openkat_service_root }}/normalizer/docker-compose.yml up
+ExecStop={{ docker_binary }} compose -f {{ openkat_service_root }}/normalizer/docker-compose.yml stop
+
+[Install]
+WantedBy=multi-user.target

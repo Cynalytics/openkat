@@ -1,0 +1,47 @@
+---
+- name: Create srv directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - "{{ openkat_service_root }}/"
+    - "{{ openkat_service_root }}/rockyworker/"
+
+- name: Create compose file
+  ansible.builtin.template:
+    src: "rocky_worker_docker-compose.yml.j2"
+    dest: "{{ openkat_service_root }}/rockyworker/docker-compose.yml"
+    owner: root
+    group: root
+    mode: '0640'
+  notify: Restart openkat_rockyworker service
+
+- name: Create systemd Unit file for rocky worker service
+  ansible.builtin.template:
+    src: "rocky_worker.service.j2"
+    dest: /etc/systemd/system/openkat_rockyworker.service
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart openkat_rockyworker service
+
+- name: Enable openkat_rockyworker service
+  ansible.builtin.systemd:
+    name: openkat_rockyworker.service
+    enabled: true
+    daemon_reload: true
+    state: started
+    no_block: true
+
+- name: Wait until rocky worker service is active (might take a few tries as it needs to pull the docker image on first run)
+  ansible.builtin.systemd:
+    name: openkat_rockyworker.service
+  register: svc_state
+  retries: 25
+  delay: 10
+  until: svc_state.status.ActiveState == 'active'
+  changed_when: false
+  when: not ansible_check_mode

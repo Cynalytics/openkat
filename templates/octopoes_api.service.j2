@@ -1,0 +1,19 @@
+[Unit]
+Description=OpenKat Octopoes-api in Docker-compose ({{ openkat_service_root }}/octopoesapi)
+Requires=docker.service
+After=docker.service
+Requires=traefik.service
+Requires=docker-compose-networks.service
+Requires=openkat_rabbitmq.service
+Requires=openkat_crux.service
+
+[Service]
+Restart=always
+WorkingDirectory={{ openkat_service_root }}/octopoesapi
+TimeoutStartSec=2min
+ExecStartPre={{ docker_binary }} compose  -f {{ openkat_service_root }}/octopoesapi/docker-compose.yml pull
+ExecStart={{ docker_binary }} compose -f {{ openkat_service_root }}/octopoesapi/docker-compose.yml up
+ExecStop={{ docker_binary }} compose -f {{ openkat_service_root }}/octopoesapi/docker-compose.yml stop
+
+[Install]
+WantedBy=multi-user.target

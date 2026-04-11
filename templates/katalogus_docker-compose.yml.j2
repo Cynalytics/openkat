@@ -1,0 +1,43 @@
+# {{ ansible_managed }}
+services:
+  katalogus:
+    hostname: katalogus
+    restart: on-failure
+    mem_limit: 512m
+    cpus: 1.0
+    command: ["katalogus"]
+    ports:
+      - "127.0.0.1:8003:8000"
+    image: "{{ openkat_docker_repository }}/openkat-boefjes:{{ openkat_katalogus_version }}"
+    environment:
+      - DATABASE_MIGRATION=true
+      - BYTES_API=http://bytes:8000
+      - BYTES_USERNAME={{ openkat_bytes_user }}
+      - BYTES_PASSWORD={{ openkat_bytes_password }}
+      - SCHEDULER_API=http://mula:8000
+      - KATALOGUS_API=http://katalogus:8000
+      - OCTOPOES_API=http://octopoesapi:80
+      - KATALOGUS_DB_URI=postgresql://{{ openkat_katalogus_user }}:{{ openkat_katalogus_password }}@postgres:5432/{{ openkat_katalogus_database }}
+      - BOEFJES_API=http://boefje:8000
+    volumes:
+      - katalogus-data:/data
+    networks:
+      openkatinternalnetwork:
+        aliases:
+          - katalogus
+
+networks:
+  openkatinternalnetwork:
+    external: true
+
+volumes:
+  katalogus-data:
+{% if openkat_data_directory
+ is defined and openkat_data_directory != '' %}
+
+    driver: local
+    driver_opts:
+      type: none
+      device: {{ openkat_data_directory }}/katalogus
+      o: bind
+  {% endif %}

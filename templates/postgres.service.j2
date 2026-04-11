@@ -1,0 +1,18 @@
+[Unit]
+Description=OpenKat PostgreSQL in Docker-compose ({{ openkat_service_root }}/postgres)
+Requires=docker.service
+After=docker.service
+Requires=traefik.service
+Requires=docker-compose-networks.service
+
+[Service]
+Restart=always
+Type=simple
+TimeoutStartSec=2min
+WorkingDirectory={{ openkat_service_root }}/postgres
+ExecStartPre={{ docker_binary }} compose  -f {{ openkat_service_root }}/postgres/docker-compose.yml pull
+ExecStart={{ docker_binary }} compose -f {{ openkat_service_root }}/postgres/docker-compose.yml up
+ExecStop={{ docker_binary }} compose -f {{ openkat_service_root }}/postgres/docker-compose.yml stop
+
+[Install]
+WantedBy=multi-user.target

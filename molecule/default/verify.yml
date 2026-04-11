@@ -1,0 +1,62 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Check key services are active
+      ansible.builtin.command: systemctl is-active {{ item }}
+      changed_when: false
+      loop:
+        - docker.service
+        - traefik.service
+        - openkat_postgres.service
+        - openkat_rocky.service
+      register: service_states
+
+    - name: Assert key services are active
+      ansible.builtin.assert:
+        that:
+          - item.rc == 0
+          - item.stdout == 'active'
+      loop: "{{ service_states.results }}"
+
+    - name: Check generated OpenKAT files exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /srv/traefik/docker-compose.yml
+        - /srv/postgres/docker-compose.yml
+        - /srv/rocky/docker-compose.yml
+        - /etc/systemd/system/traefik.service
+        - /etc/systemd/system/openkat_postgres.service
+        - /etc/systemd/system/openkat_rocky.service
+        - /etc/openkat/rocky/rocky_superuser_email
+      register: openkat_generated_files
+
+    - name: Assert generated OpenKAT files exist
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+      loop: "{{ openkat_generated_files.results }}"
+
+    - name: Read Rocky compose file
+      ansible.builtin.slurp:
+        src: /srv/rocky/docker-compose.yml
+      register: rocky_compose
+
+    - name: Assert Rocky compose file contains test values
+      ansible.builtin.assert:
+        that:
+          - "'admin@molecule.test' in (rocky_compose.content | b64decode)"
+          - "'Host(`openkat-debian12`)' in (rocky_compose.content | b64decode)"
+
+    - name: Read Rocky superuser email file
+      ansible.builtin.slurp:
+        src: /etc/openkat/rocky/rocky_superuser_email
+      register: rocky_superuser_email
+
+    - name: Assert Rocky superuser email file is rendered
+      ansible.builtin.assert:
+        that:
+          - "'OPENKAT_SUPERUSER_EMAIL=admin@molecule.test' in (rocky_superuser_email.content | b64decode)"

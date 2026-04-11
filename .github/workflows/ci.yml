@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements-test.txt
+            requirements-molecule.txt
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-test.txt -r requirements-molecule.txt
+
+      - name: Run pytest suite
+        run: pytest
+
+      - name: Run Molecule default scenario
+        run: molecule test -s default
+
+      - name: Run Molecule missing-required-vars scenario
+        run: molecule test -s missing-required-vars

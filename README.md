@@ -1,6 +1,66 @@
 # OpenKAT Role
 
+[![CI](https://github.com/Cynalytics/openkat/actions/workflows/ci.yml/badge.svg)](https://github.com/Cynalytics/openkat/actions/workflows/ci.yml)
+
 This role deploys [OpenKAT](https://openkat.nl), the opensource security scanner, as a set of Docker Compose projects, each managed by its own systemd unit.
+
+## Status
+
+The GitHub Actions CI workflow runs the automated checks for this role on every pull request and on pushes to the main branches.
+
+Current coverage in CI:
+
+- pytest unit and smoke tests
+- Molecule `default` scenario
+- Molecule `missing-required-vars` scenario
+
+## Local Development
+
+Create a virtual environment and install the local test dependencies:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements-test.txt -r requirements-molecule.txt
+```
+
+Run the pytest suite:
+
+```bash
+pytest
+```
+
+Run the Molecule scenarios:
+
+```bash
+molecule test -s default
+molecule test -s missing-required-vars
+```
+
+The Molecule scenarios require a working Docker daemon because they run privileged
+systemd-enabled test containers.
+
+### Troubleshooting
+
+If `molecule test` fails with a Docker daemon error, confirm that Docker is installed,
+running, and reachable from your shell:
+
+```bash
+docker version
+docker info
+```
+
+If the scenario fails during container startup, verify that your Docker environment
+allows privileged containers and the `/sys/fs/cgroup` bind mount required for systemd.
+
+If `pytest` or `molecule` is not found, make sure the virtual environment is active:
+
+```bash
+. .venv/bin/activate
+```
+
+If dependency installation fails on a system-managed Python interpreter, use the local
+virtual environment shown above instead of installing packages into the system Python.
 
 ## Traefik Proxying
 
@@ -182,3 +242,61 @@ Current `20.pgsql` template uses:
 - `compress = no`
 
 Set `openkat_backupninja_enabled: false` to skip all BackupNinja-related setup.
+
+## Testing
+
+This role now includes a lightweight pytest suite under `tests/`.
+
+The suite focuses on the parts of the role that are practical to validate without
+booting a full nested Docker + systemd environment:
+
+- helper logic in `library/persist_password.py`
+- task wiring and required variable declarations
+- rendering smoke tests for all Jinja templates with representative role variables
+
+Install the test dependencies and run the suite with:
+
+```bash
+python -m pip install -r requirements-test.txt
+pytest
+```
+
+### Molecule
+
+A Molecule scenario is available under `molecule/default/` for Linux hosts that can
+run privileged Docker containers with systemd enabled.
+
+The scenario converges the full role inside a Debian 12 systemd container. It uses a
+prepared fake `docker` binary inside that container so the role can exercise its
+systemd and compose wiring without needing a nested Docker daemon.
+
+Install the Molecule dependencies and run the scenario with:
+
+```bash
+python -m pip install -r requirements-molecule.txt
+molecule test
+```
+
+The scenario disables BackupNinja to keep the test focused on the role's service and
+template orchestration.
+
+A second scenario under `molecule/missing-required-vars/` exercises the failure path
+for missing required role variables and asserts that the role aborts with the expected
+validation message.
+
+Run a specific scenario with:
+
+```bash
+molecule test -s default
+molecule test -s missing-required-vars
+```
+
+## CI
+
+GitHub Actions CI is defined in `.github/workflows/ci.yml`.
+
+It runs:
+
+- the pytest suite
+- `molecule test -s default`
+- `molecule test -s missing-required-vars`

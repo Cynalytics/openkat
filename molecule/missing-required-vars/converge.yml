@@ -1,0 +1,22 @@
+---
+- name: Converge failure scenario
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Attempt to apply role without required variables
+      block:
+        - name: Include openkat role
+          ansible.builtin.include_role:
+            name: openkat
+
+        - name: Fail because role unexpectedly succeeded
+          ansible.builtin.fail:
+            msg: Role unexpectedly converged without required variables.
+      rescue:
+        - name: Assert role failed for required variable validation
+          ansible.builtin.assert:
+            that:
+              - ansible_failed_result is defined
+              - ansible_failed_result.msg is search('Variable .* is required but not defined')
+              - ansible_failed_task.name == 'Check For Variables That Are Required But Do Not Have Defaults'

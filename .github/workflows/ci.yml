@@ -29,6 +29,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements-test.txt -r requirements-molecule.txt
 
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install -r requirements.yml
+
       - name: Run pytest suite
         run: pytest
 

@@ -36,7 +36,7 @@ jobs:
         run: pytest
 
       - name: Run Molecule default scenario
-        run: molecule test -s default
+        run: molecule --debug test -s default
 
       - name: Run Molecule missing-required-vars scenario
         run: molecule test -s missing-required-vars

@@ -3,20 +3,15 @@
   hosts: all
   become: true
   gather_facts: false
-  pre_tasks:
-    - name: Wait for systemd to become available
-      ansible.builtin.command: >-
-        /bin/sh -c "test -d /run/systemd/system && systemctl list-unit-files >/dev/null 2>&1"
-      register: systemd_ready
-      changed_when: false
-      retries: 30
-      delay: 2
-      until: systemd_ready.rc == 0
-
-    - name: Gather facts after systemd is ready
-      ansible.builtin.setup:
-
   tasks:
+    - name: Ensure fake docker state directory exists
+      ansible.builtin.file:
+        path: /var/tmp/openkat-fake-docker
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
     - name: Install fake docker CLI for Molecule
       ansible.builtin.copy:
         dest: /usr/bin/docker
@@ -147,14 +142,10 @@
           [Install]
           WantedBy=multi-user.target
 
-    - name: Reload systemd after fake docker setup
-      ansible.builtin.command: systemctl daemon-reload
-      changed_when: false
-
-    - name: Enable and start fake docker service
-      ansible.builtin.command: systemctl enable --now docker.service
-      register: fake_docker_service
-      changed_when: "'Created symlink' in fake_docker_service.stdout"
-      retries: 10
-      delay: 2
-      until: fake_docker_service.rc == 0
+    - name: Touch marker indicating prepare completed
+      ansible.builtin.file:
+        path: /var/tmp/openkat-fake-docker/prepare-complete
+        state: touch
+        owner: root
+        group: root
+        mode: '0644'

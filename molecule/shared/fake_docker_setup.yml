@@ -1,0 +1,146 @@
+---
+- name: Ensure fake docker state directory exists
+  ansible.builtin.file:
+    path: /var/tmp/openkat-fake-docker
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install fake docker CLI for Molecule
+  ansible.builtin.copy:
+    dest: /usr/bin/docker
+    owner: root
+    group: root
+    mode: '0755'
+    content: |
+      #!/bin/sh
+      set -eu
+
+      state_dir=/var/tmp/openkat-fake-docker
+      superuser_flag="$state_dir/rocky-superuser-created"
+      mkdir -p "$state_dir"
+
+      if [ "${1:-}" = "compose" ]; then
+        shift
+
+        has_all_resources=0
+        for arg in "$@"; do
+          if [ "$arg" = "--all-resources" ]; then
+            has_all_resources=1
+          fi
+        done
+
+        for arg in "$@"; do
+          case "$arg" in
+            version)
+              echo "Docker Compose version v2.27.0"
+              exit 0
+              ;;
+            ps)
+              echo "rocky-container rocky running"
+              exit 0
+              ;;
+            pull|stop)
+              exit 0
+              ;;
+            up)
+              if [ "$has_all_resources" -eq 1 ]; then
+                exit 0
+              fi
+
+              trap 'exit 0' TERM INT
+              while :; do
+                sleep 300
+              done
+              ;;
+          esac
+        done
+
+        exit 0
+      fi
+
+      if [ "${1:-}" = "exec" ]; then
+        shift
+        container_id="${1:-}"
+        shift || true
+        if [ "${1:-}" = "python" ]; then
+          shift
+        fi
+        manage_py="${1:-}"
+        shift || true
+        subcommand="${1:-}"
+        shift || true
+
+        case "$subcommand" in
+          createsuperuser)
+            touch "$superuser_flag"
+            echo "created ${container_id} via ${manage_py}"
+            exit 0
+            ;;
+          shell)
+            if [ "${1:-}" = "-c" ]; then
+              shift
+            fi
+            shell_code="${1:-}"
+
+            case "$shell_code" in
+              *superuser_count*)
+                if [ -f "$superuser_flag" ]; then
+                  echo "HAS_SUPERUSER"
+                else
+                  echo "NO_SUPERUSER"
+                fi
+                ;;
+              *"Password set successfully"*)
+                echo "Password set successfully"
+                ;;
+              *"Name updated"*)
+                echo "Name updated"
+                ;;
+              *OrganizationMember*|*memberships_created*|*memberships_skipped*)
+                echo "memberships_created=0 memberships_skipped=0"
+                ;;
+              *)
+                echo "OK"
+                ;;
+            esac
+            exit 0
+            ;;
+        esac
+      fi
+
+      if [ "${1:-}" = "version" ] || [ "${1:-}" = "--version" ]; then
+        echo "Docker version 26.1.0, build fake"
+        exit 0
+      fi
+
+      echo "fake docker: unsupported command: $*" >&2
+      exit 1
+
+- name: Create fake docker.service unit
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/docker.service
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Fake Docker service for Molecule
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/usr/bin/install -d -m 0755 /var/tmp/openkat-fake-docker
+      ExecStop=/usr/bin/rm -rf /var/tmp/openkat-fake-docker
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Touch marker indicating fake docker setup completed
+  ansible.builtin.file:
+    path: /var/tmp/openkat-fake-docker/setup-complete
+    state: touch
+    owner: root
+    group: root
+    mode: '0644'

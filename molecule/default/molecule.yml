@@ -33,7 +33,6 @@ provisioner:
         openkat_traefik_letsencrypt_admin_email: letsencrypt@molecule.test
         openkat_backupninja_enabled: false
   playbooks:
-    prepare: prepare.yml
     converge: converge.yml
     verify: verify.yml
 
@@ -46,7 +45,6 @@ scenario:
     - destroy
     - dependency
     - create
-    - prepare
     - converge
     - idempotence
     - verify

@@ -12,14 +12,7 @@ platforms:
   - name: openkat-debian12
     image: geerlingguy/docker-debian12-ansible:latest
     pre_build_image: true
-    privileged: true
-    command: /sbin/init
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-    tmpfs:
-      - /run
-      - /run/lock
-      - /tmp
+    command: sleep infinity
 
 provisioner:
   name: ansible

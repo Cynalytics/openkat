@@ -1,8 +1,10 @@
 ---
 - name: Add apt key for PostgreSQL apt repository
-  ansible.builtin.apt_key:
+  ansible.builtin.get_url:
     url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
-    state: present
+    dest: /etc/apt/trusted.gpg.d/postgresql.asc
+    mode: '0644'
+    force: true
 
 - name: Add PostgreSQL apt repository
   ansible.builtin.apt_repository:

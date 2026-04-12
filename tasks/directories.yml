@@ -20,7 +20,7 @@
     path: "{{ openkat_data_directory }}/{{ item }}"
     state: directory
     owner: "{{ lxd_user | default('root') }}"
-    group: docker
+    group: "{{ docker_group | default('root') }}"
     # owner: "{{ lookup('vars', item + '_user_id') }}"
     # group: "{{ lookup('vars', item + '_group_id') }}"
     mode: '0755'

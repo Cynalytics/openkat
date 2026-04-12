@@ -33,3 +33,27 @@
   when:
     - "'could not be found' in lxd_user_check.msg"
     - not ansible_check_mode
+
+# do the same for the docker group
+- name: Check if docker group exists
+  ansible.builtin.getent:
+    database: group
+    key: docker
+  register: docker_group_check
+  changed_when: false
+  failed_when: false
+  when: not ansible_check_mode
+
+- name: Set docker group to docker
+  ansible.builtin.set_fact:
+    docker_group: docker
+  when:
+    - "'could not be found' not in docker_group_check.msg"
+    - not ansible_check_mode
+
+- name: Set docker group to root since docker group does not exist
+  ansible.builtin.set_fact:
+    docker_group: root
+  when:
+    - "'could not be found' in docker_group_check.msg"
+    - not ansible_check_mode

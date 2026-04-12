@@ -20,20 +20,16 @@
   failed_when: false
   when: not ansible_check_mode
 
-- name: debug lxd user check result
-  ansible.builtin.debug:
-    var: lxd_user_check
-
-- name: stop
-  meta: end_play
-
-
 - name: Set lxd user to lxd
   ansible.builtin.set_fact:
     lxd_user: lxd
-  when: "'lxd' in (lxd_user_check.an.getent_passwd.keys() | list)"
+  when:
+    - "'could not be found' not in lxd_user_check.msg"
+    - not ansible_check_mode
 
 - name: Set lxd user to root since lxd user does not exist
   ansible.builtin.set_fact:
     lxd_user: root
-  when: "'lxd' not in (ansible_facts.getent_passwd.keys() | list)"
+  when:
+    - "'could not be found' in lxd_user_check.msg"
+    - not ansible_check_mode

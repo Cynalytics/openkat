@@ -22,9 +22,9 @@
 - name: Set lxd user to lxd
   ansible.builtin.set_fact:
     lxd_user: lxd
-  when: 'lxd' in (getent_passwd.keys() | list)
+  when: "'lxd' in (getent_passwd.keys() | list)"
 
 - name: Set lxd user to root since lxd user does not exist
   ansible.builtin.set_fact:
     lxd_user: root
-  when: 'lxd' not in (getent_passwd.keys() | list)
+  when: "'lxd' not in (getent_passwd.keys() | list)"

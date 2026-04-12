@@ -265,6 +265,7 @@ Create a virtual environment and install the local test dependencies:
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install -r requirements-test.txt -r requirements-molecule.txt
+ansible-galaxy collection install -r requirements.yml
 ```
 
 Run the pytest suite:

@@ -4,63 +4,18 @@
 
 This role deploys [OpenKAT](https://openkat.nl), the opensource security scanner, as a set of Docker Compose projects, each managed by its own systemd unit.
 
-## Status
 
-The GitHub Actions CI workflow runs the automated checks for this role on every pull request and on pushes to the main branches.
+## Overview
 
-Current coverage in CI:
+This role installs a production-grade setup of Openkat:
+- all Openkat services run in their own Docker-Compose stack
+- all Docker-compose stacks are controlled by their own systemd service
+- dependecies are handles in systemd
+- all backend services run in a local docker network
+- all external exposed services use Traefik as a front proxy
+- certificates are handled by Lets Encrypt
 
-- pytest unit and smoke tests
-- Molecule `default` scenario
-- Molecule `missing-required-vars` scenario
 
-## Local Development
-
-Create a virtual environment and install the local test dependencies:
-
-```bash
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -r requirements-test.txt -r requirements-molecule.txt
-```
-
-Run the pytest suite:
-
-```bash
-pytest
-```
-
-Run the Molecule scenarios:
-
-```bash
-molecule test -s default
-molecule test -s missing-required-vars
-```
-
-The Molecule scenarios require a working Docker daemon because they run privileged
-systemd-enabled test containers.
-
-### Troubleshooting
-
-If `molecule test` fails with a Docker daemon error, confirm that Docker is installed,
-running, and reachable from your shell:
-
-```bash
-docker version
-docker info
-```
-
-If the scenario fails during container startup, verify that your Docker environment
-allows privileged containers and the `/sys/fs/cgroup` bind mount required for systemd.
-
-If `pytest` or `molecule` is not found, make sure the virtual environment is active:
-
-```bash
-. .venv/bin/activate
-```
-
-If dependency installation fails on a system-managed Python interpreter, use the local
-virtual environment shown above instead of installing packages into the system Python.
 
 ## Traefik Proxying
 
@@ -245,7 +200,7 @@ Set `openkat_backupninja_enabled: false` to skip all BackupNinja-related setup.
 
 ## Testing
 
-This role now includes a lightweight pytest suite under `tests/`.
+This role includes a lightweight pytest suite under `tests/`.
 
 The suite focuses on the parts of the role that are practical to validate without
 booting a full nested Docker + systemd environment:
@@ -300,3 +255,52 @@ It runs:
 - the pytest suite
 - `molecule test -s default`
 - `molecule test -s missing-required-vars`
+
+
+## Local Development
+
+Create a virtual environment and install the local test dependencies:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements-test.txt -r requirements-molecule.txt
+```
+
+Run the pytest suite:
+
+```bash
+pytest
+```
+
+Run the Molecule scenarios:
+
+```bash
+molecule test -s default
+molecule test -s missing-required-vars
+```
+
+The Molecule scenarios require a working Docker daemon because they run privileged
+systemd-enabled test containers.
+
+### Troubleshooting
+
+If `molecule test` fails with a Docker daemon error, confirm that Docker is installed,
+running, and reachable from your shell:
+
+```bash
+docker version
+docker info
+```
+
+If the scenario fails during container startup, verify that your Docker environment
+allows privileged containers and the `/sys/fs/cgroup` bind mount required for systemd.
+
+If `pytest` or `molecule` is not found, make sure the virtual environment is active:
+
+```bash
+. .venv/bin/activate
+```
+
+If dependency installation fails on a system-managed Python interpreter, use the local
+virtual environment shown above instead of installing packages into the system Python.

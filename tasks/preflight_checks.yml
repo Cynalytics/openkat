@@ -29,6 +29,7 @@
 
 - name: Check For Variables That Are Required But Do Not Have Defaults
   ansible.builtin.assert:
-    that: "{{ item }} is defined and {{ item }} != ''"
+    that:
+      - "(lookup('vars', item, default='') | string | trim | length) > 0"
     fail_msg: "Variable {{ item }} is required but not defined. Please define it in your inventory or group_vars."
   loop: "{{ openkat_required_vars }}"

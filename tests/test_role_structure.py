@@ -67,6 +67,9 @@ def test_preflight_asserts_required_variables(role_root):
 
     assert required_var_assert["name"] == "Check For Variables That Are Required But Do Not Have Defaults"
     assert required_var_assert["loop"] == "{{ openkat_required_vars }}"
+    assert required_var_assert["ansible.builtin.assert"]["that"] == [
+        "(lookup('vars', item, default='') | string | trim | length) > 0"
+    ]
     assert "required but not defined" in required_var_assert["ansible.builtin.assert"]["fail_msg"]
 
 

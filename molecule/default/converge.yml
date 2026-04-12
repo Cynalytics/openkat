@@ -5,6 +5,7 @@
   gather_facts: true
   pre_tasks:
     - name: Bootstrap fake docker tooling for Molecule
-      ansible.builtin.import_tasks: ../shared/fake_docker_setup.yml
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/shared/fake_docker_setup.yml"
   roles:
     - role: openkat

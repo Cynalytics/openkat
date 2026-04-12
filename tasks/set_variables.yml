@@ -9,3 +9,23 @@
 - name: Set Docker Binary Variable
   ansible.builtin.set_fact:
     docker_binary: "{{ docker_binary_path.stdout | default('/usr/bin/docker') }}"
+
+# check if the lxd user exists and if so, set a variable to use the lxd version of docker
+- name: Check if lxd user exists
+  ansible.builtin.getent:
+    database: passwd
+    key: lxd
+  register: lxd_user_check
+  changed_when: false
+  failed_when: false
+  when: not ansible_check_mode
+
+- name: Set lxd user to lxd
+  ansible.builtin.set_fact:
+    lxd_user: lxd
+  when: lxd_user_check.found
+
+- name: Set lxd user to root since lxd user does not exist
+  ansible.builtin.set_fact:
+    lxd_user: root
+  when: not lxd_user_check.found

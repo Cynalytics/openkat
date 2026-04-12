@@ -19,7 +19,7 @@
   ansible.builtin.file:
     path: "{{ openkat_data_directory }}/{{ item }}"
     state: directory
-    owner: lxd
+    owner: "{{ lxd_user }}"
     group: docker
     # owner: "{{ lookup('vars', item + '_user_id') }}"
     # group: "{{ lookup('vars', item + '_group_id') }}"

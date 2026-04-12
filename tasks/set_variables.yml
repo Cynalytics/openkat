@@ -15,14 +15,23 @@
   ansible.builtin.getent:
     database: passwd
     key: lxd
+  register: lxd_user_check
   changed_when: false
   failed_when: false
   when: not ansible_check_mode
 
+- name: debug lxd user check result
+  ansible.builtin.debug:
+    var: lxd_user_check
+
+- name: stop
+  meta: end_play
+
+
 - name: Set lxd user to lxd
   ansible.builtin.set_fact:
     lxd_user: lxd
-  when: "'lxd' in (ansible_facts.getent_passwd.keys() | list)"
+  when: "'lxd' in (lxd_user_check.an.getent_passwd.keys() | list)"
 
 - name: Set lxd user to root since lxd user does not exist
   ansible.builtin.set_fact:

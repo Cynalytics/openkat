@@ -1,0 +1,25 @@
+---
+galaxy_info:
+  role_name: openkat
+  namespace: cynalytics
+  author: Cynalytics
+  company: Cynalytics
+  description: >-
+    Deploy OpenKAT as Docker Compose stacks managed by systemd, with Traefik
+    proxying and optional PostgreSQL backup integration.
+  license: MIT
+  min_ansible_version: "2.15"
+  issue_tracker_url: https://github.com/Cynalytics/openkat/issues
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+  galaxy_tags:
+    - openkat
+    - security
+    - docker
+    - compose
+    - systemd
+    - traefik
+
+dependencies: []

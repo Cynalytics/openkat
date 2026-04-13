@@ -4,6 +4,7 @@
   gather_facts: false
   tasks:
     - name: Attempt to apply role without required variables
+      check_mode: true
       block:
         - name: Include openkat role
           ansible.builtin.include_role:
@@ -12,7 +13,6 @@
         - name: Fail because role unexpectedly succeeded
           ansible.builtin.fail:
             msg: Role unexpectedly converged without required variables.
-      check_mode: true
       rescue:
         - name: Assert role failed for required variable validation
           ansible.builtin.assert:

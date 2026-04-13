@@ -4,8 +4,9 @@
   become: true
   gather_facts: false
   tasks:
-    - name: Check key services are active
-      ansible.builtin.command: systemctl is-active {{ item }}
+    - name: Gather key service states
+      ansible.builtin.systemd:
+        name: "{{ item }}"
       changed_when: false
       loop:
         - docker.service
@@ -17,8 +18,7 @@
     - name: Assert key services are active
       ansible.builtin.assert:
         that:
-          - item.rc == 0
-          - item.stdout == 'active'
+          - item.status.ActiveState == 'active'
       loop: "{{ service_states.results }}"
 
     - name: Check generated OpenKAT files exist

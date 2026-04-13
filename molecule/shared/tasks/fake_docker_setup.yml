@@ -145,7 +145,7 @@
     mode: '0755'
     content: |
       #!/bin/sh
-      # Fake systemctl for Molecule tests — ansible.builtin.systemd uses this binary.
+      # Fake systemctl for Molecule tests - ansible.builtin.systemd uses this binary.
       set -eu
 
       # Strip leading flags (e.g. --no-ask-password, --system)
@@ -196,7 +196,7 @@
           exit 0
           ;;
         cat|status)
-          echo "● fake.service - Fake service"
+          echo "* fake.service - Fake service"
           echo "   Active: active (running)"
           exit 0
           ;;

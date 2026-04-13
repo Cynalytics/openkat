@@ -210,6 +210,8 @@
   ansible.builtin.file:
     path: /var/tmp/openkat-fake-docker/setup-complete
     state: touch
+    access_time: preserve
+    modification_time: preserve
     owner: root
     group: root
     mode: '0644'

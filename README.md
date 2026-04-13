@@ -43,7 +43,7 @@ roles:
 
 ## Versioning
 
-This role uses the same version as the Openkat project, with a postfix indicating the role version: version 1.21.0-1 will install Openkat 1.21.0
+This role uses the same version as the Openkat project, with a postfix indicating the role version: version v1.21.0-1 will install Openkat v1.21.0
 
 ## Traefik Proxying
 

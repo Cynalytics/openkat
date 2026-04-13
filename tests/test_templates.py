@@ -47,7 +47,11 @@ def test_rocky_compose_contains_expected_runtime_settings(jinja_env, render_cont
 
 def test_postgres_service_unit_uses_role_paths(jinja_env, render_context):
     rendered = jinja_env.get_template("postgres.service.j2").render(render_context)
+    postgres_root = f"{render_context['openkat_service_root']}/postgres"
 
-    assert "WorkingDirectory=/srv/postgres" in rendered
-    assert "ExecStartPre=/usr/bin/docker compose  -f /srv/postgres/docker-compose.yml pull" in rendered
+    assert f"WorkingDirectory={postgres_root}" in rendered
+    assert (
+        f"ExecStartPre={render_context['docker_binary']} compose  -f {postgres_root}/docker-compose.yml pull"
+        in rendered
+    )
     assert "Requires=docker-compose-networks.service" in rendered

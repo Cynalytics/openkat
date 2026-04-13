@@ -17,7 +17,17 @@ This role installs a production-grade setup of Openkat:
 
 The role has been tested on Ubuntu 22.04 LTS.
 
-## Usage
+## Example playbook
+
+
+- hosts: all
+  vars:
+    openkat_superuser_fullname: John Doe
+    openkat_superuser_email: john.doe@example.com
+    openkat_traefik_letsencrypt_admin_email: certmaster@example.com
+  roles:
+    - geerlingguy.docker
+    - cynalytics.openkat
 
 
 

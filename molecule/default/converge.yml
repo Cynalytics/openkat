@@ -9,4 +9,3 @@
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/shared/tasks/fake_docker_setup.yml"
   roles:
     - role: openkat
-

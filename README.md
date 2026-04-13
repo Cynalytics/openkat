@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Cynalytics/openkat/actions/workflows/ci.yml/badge.svg)](https://github.com/Cynalytics/openkat/actions/workflows/ci.yml)
 
-This role deploys [OpenKAT](https://openkat.nl), the opensource security scanner, as a set of Docker Compose projects, each managed by its own systemd unit.
+This Ansible role deploys [OpenKAT](https://openkat.nl), the opensource security scanner, as a set of Docker Compose projects, each managed by its own systemd unit.
 
 
 ## Overview
@@ -17,9 +17,19 @@ This role installs a production-grade setup of Openkat:
 
 The role has been tested on Ubuntu 22.04 LTS.
 
+## Example galaxy requirements
+
+```yaml
+---
+roles:
+  - name: geerlingguy.docker
+  - name: cynalytics.openkat
+    version: "1.21"
+```
+
 ## Example playbook
 
-```
+```yaml
 - hosts: all
   vars:
     openkat_superuser_fullname: John Doe

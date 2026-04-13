@@ -24,6 +24,7 @@ provisioner:
         openkat_superuser_fullname: Molecule Admin
         openkat_superuser_email: admin@molecule.test
         openkat_traefik_letsencrypt_admin_email: letsencrypt@molecule.test
+        openkat_service_root: /opt/openkat
         openkat_backupninja_enabled: false
         openkat_postgres_manage_databases_users: false
   playbooks:

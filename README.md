@@ -19,7 +19,7 @@ The role has been tested on Ubuntu 22.04 LTS.
 
 ## Example playbook
 
-
+```
 - hosts: all
   vars:
     openkat_superuser_fullname: John Doe
@@ -28,7 +28,7 @@ The role has been tested on Ubuntu 22.04 LTS.
   roles:
     - geerlingguy.docker
     - cynalytics.openkat
-
+```
 
 
 ## Versioning

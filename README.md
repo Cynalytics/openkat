@@ -15,7 +15,15 @@ This role installs a production-grade setup of Openkat:
 - all external exposed services use Traefik as a front proxy
 - certificates are handled by Lets Encrypt
 
+The role has been tested on Ubuntu 22.04 LTS.
 
+## Usage
+
+
+
+## Versioning
+
+This role uses the same version as the Openkat project: version 1.21 will install Openkat 1.21
 
 ## Traefik Proxying
 
@@ -82,43 +90,35 @@ Most service tasks:
 - enable and start the unit
 - wait until `ActiveState == active`
 
-## Variables in defaults/main.yml
-
-Defaults are defined in `defaults/main.yml`. Override them in inventory (`group_vars`, `host_vars`) or play vars.
+## Role variables
 
 ### Core image and install path
 
-- `openkat_version`: base OpenKAT version anchor used by component versions
-- `openkat_docker_repository`: Docker registry/repository prefix
-- `openkat_crux_version`: explicit version for Crux
-- `openkat_service_root`: root path for service Compose directories (default `/srv`)
-- `openkat_data_directory`: persistent data root (default `/data`)
-
-### Backup control
-
-- `openkat_backupninja_enabled`: enables BackupNinja setup for PostgreSQL (`true` by default)
-
-### Per-component image versions
-
-- `openkat_boefje_version`
-- `openkat_bytes_version`
-- `openkat_katalogus_version`
-- `openkat_mula_version`
-- `openkat_normalizer_version`
-- `openkat_octopoes_api_version`
-- `openkat_octopoes_api_worker_version`
-- `openkat_rocky_version`
-- `openkat_rocky_worker_version`
-
-These default to `openkat_version` unless explicitly overridden.
-
-### Database and service account names
-
-- `openkat_rocky_database`, `openkat_rocky_user`
-- `openkat_katalogus_database`, `openkat_katalogus_user`
-- `openkat_bytes_database`, `openkat_bytes_user`
-- `openkat_mula_database`, `openkat_mula_user`
-- `openkat_rabbitmq_user`, `openkat_rabbitmq_vhost`
+| variable | default | description |
+|----------|---------|-------------|
+| `openkat_superuser_fullname` | empty | REQUIRED full name for generated Superuser for Openkat application |
+| `openkat_superuser_email` | empty | REQUIRED email address for superuser |
+| `openkat_traefik_letsencrypt_admin_email` | empty | REQUIRED email address for Lets Encrypt ceritificates |
+| `openkat_version` |  `v1.21.0` | OpenKAT version to install or upgrade to |
+| `openkat_docker_repository`| `docker.underdark.nl/librekat` |  Docker registry/repository prefix |
+| `openkat_crux_version`| `v1.1.0` | Version for Crux component |
+| `openkat_service_root`| `/opt/openkat` |  root path for service Compose directories  |
+| `openkat_data_directory` | `/data/openkat` | persistent data root directory |
+| `openkat_backupninja_enabled`| `true` | enables BackupNinja setup for PostgreSQL |
+| `openkat_boefje_version` | `openkat_version` | specific version for boefje service |
+| `openkat_bytes_version` | `openkat_version` | specific version for bytes service |
+| `openkat_katalogus_version` | `openkat_version` | specific version for katalogus service |
+| `openkat_mula_version` | `openkat_version` | specific version for mula service |
+| `openkat_normalizer_version` | `openkat_version` | specific version for normalizer service |
+| `openkat_octopoes_api_version` | `openkat_version` | specific version for octpous_api service |
+| `openkat_octopoes_api_worker_version` | `openkat_version` | specific version for octopus_api_worker service |
+| `openkat_rocky_version` | `openkat_version` | specific version for rocky service |
+| `openkat_rocky_worker_version` | `openkat_version` | specific version for rocky_worker service |
+| `openkat_rocky_database`  | `openkat_rocky_user` | database for rocky service |
+| `openkat_katalogus_database` | `openkat_katalogus_user` | database for rocky service |
+| `openkat_bytes_database`| `openkat_bytes_user` | database for rocky service |
+| `openkat_mula_database`| `openkat_mula_user` | database for rocky service |
+| `openkat_rabbitmq_user`| `openkat_rabbitmq_vhost` | database for rocky service |
 
 ### PostgreSQL and RabbitMQ runtime
 
@@ -134,15 +134,6 @@ These default to `openkat_version` unless explicitly overridden.
 - `openkat_rocky_worker_debug`
 - `openkat_rocky_worker_2fa`
 
-### Required user-supplied values
-
-These are intentionally empty by default and validated in preflight checks:
-
-- `openkat_superuser_fullname`
-- `openkat_superuser_email`
-- `openkat_traefik_letsencrypt_admin_email`
-
-`openkat_required_vars` lists these required names and is looped by an assert task.
 
 ## Persistent Password Generation and Rotation
 

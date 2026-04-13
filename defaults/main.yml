@@ -5,10 +5,10 @@ openkat_version: &openkat_version 'v1.21.0'
 openkat_docker_repository: 'docker.underdark.nl/librekat'
 openkat_crux_version: 'v1.1.0'
 # where the OpenKAT services should be installed
-openkat_service_root: '/srv'
+openkat_service_root: '/opt/openkat'
 # where OpenKAT should store its data, this will be mounted into the containers and should be a location with enough storage capacity
 # ideally this should be on a separate disk from the OS
-openkat_data_directory: '/data'
+openkat_data_directory: '/data/openkat'
 # Use BackupNinja to back up the Postgres data, this will create a backup of the Postgres data every day
 openkat_backupninja_enabled: true
 # How many days to rotate passwords for OpenKat services. This will be applied only during Ansible runs

@@ -61,6 +61,10 @@ def test_required_variable_list_matches_expected_contract(role_defaults):
     ]
 
 
+def test_postgres_database_user_management_enabled_by_default(role_defaults):
+    assert role_defaults["openkat_postgres_manage_databases_users"] is True
+
+
 def test_preflight_asserts_required_variables(role_root):
     tasks = load_yaml(role_root / "tasks" / "preflight_checks.yml")
     required_var_assert = tasks[-1]

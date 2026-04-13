@@ -25,6 +25,7 @@ provisioner:
         openkat_superuser_email: admin@molecule.test
         openkat_traefik_letsencrypt_admin_email: letsencrypt@molecule.test
         openkat_backupninja_enabled: false
+        openkat_postgres_manage_databases_users: false
   playbooks:
     converge: converge.yml
     verify: verify.yml

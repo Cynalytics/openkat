@@ -59,3 +59,4 @@
 
 - name: Create Postgresql Databases and Users
   ansible.builtin.include_tasks: postgres_create_databases_users.yml
+  when: openkat_postgres_manage_databases_users

@@ -40,6 +40,7 @@ openkat_rabbitmq_vhost: 'kat'
 openkat_postgres_version: 15
 openkat_postgres_run_options: "-c listen_addresses='*'"
 openkat_postgres_admin_user: 'postgres'
+openkat_postgres_manage_databases_users: true
 
 openkat_rabbitmq_version: '3.12'
 

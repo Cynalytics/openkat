@@ -85,9 +85,15 @@ jobs:
               exit 0
             fi
 
-            if echo "$output" | grep -qiE 'FAILED|ERROR'; then
+            if echo "$output" | grep -qi '\bFAILED\b'; then
               echo "Galaxy import failed." >&2
               exit 1
+            fi
+
+            if echo "$output" | grep -qiE 'HTTP Code: 5[0-9]{2}|Internal Server Error|Bad Gateway|Gateway Timeout|Service Unavailable'; then
+              echo "Galaxy API returned a transient server error; retrying..."
+            else
+              echo "Galaxy import is still pending or returned a non-final status; retrying..."
             fi
 
             sleep 15

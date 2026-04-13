@@ -7,6 +7,14 @@
     owner: root
     group: root
 
+- name: Make sure bas_completion.d exists
+  ansible.builtin.file:
+    path: /etc/bash_completion.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Install bash completion for manage_openkat
   ansible.builtin.copy:
     src: openkat_rocky_dockercompose__manage_openkat_completion.bash

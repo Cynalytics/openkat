@@ -67,7 +67,11 @@ def test_postgres_database_user_management_enabled_by_default(role_defaults):
 
 def test_preflight_asserts_required_variables(role_root):
     tasks = load_yaml(role_root / "tasks" / "preflight_checks.yml")
-    required_var_assert = tasks[-1]
+    task_names = [task["name"] for task in tasks]
+
+    required_var_assert = next(
+        task for task in tasks if task["name"] == "Check For Variables That Are Required But Do Not Have Defaults"
+    )
 
     assert required_var_assert["name"] == "Check For Variables That Are Required But Do Not Have Defaults"
     assert required_var_assert["loop"] == "{{ openkat_required_vars }}"
@@ -75,6 +79,11 @@ def test_preflight_asserts_required_variables(role_root):
         "(lookup('vars', item, default='') | string | trim | length) > 0"
     ]
     assert "required but not defined" in required_var_assert["ansible.builtin.assert"]["fail_msg"]
+
+    # Keep required-variable validation before docker checks so missing-vars tests fail for the intended reason.
+    assert task_names.index("Check For Variables That Are Required But Do Not Have Defaults") < task_names.index(
+        "Check Docker is installed"
+    )
 
 
 def test_static_template_and_copy_sources_exist(role_root):

@@ -1,12 +1,7 @@
 ---
 - name: Converge failure scenario
   hosts: all
-  become: true
-  gather_facts: true
-  pre_tasks:
-    - name: Bootstrap fake docker tooling for Molecule
-      ansible.builtin.include_tasks:
-        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/shared/fake_docker_setup.yml"
+  gather_facts: false
   tasks:
     - name: Attempt to apply role without required variables
       block:
@@ -17,6 +12,7 @@
         - name: Fail because role unexpectedly succeeded
           ansible.builtin.fail:
             msg: Role unexpectedly converged without required variables.
+      check_mode: true
       rescue:
         - name: Assert role failed for required variable validation
           ansible.builtin.assert:

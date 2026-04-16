@@ -24,7 +24,7 @@ The role has been tested on Ubuntu 22.04 LTS.
 roles:
   - name: geerlingguy.docker
   - name: cynalytics.openkat
-    version: "1.21"
+    version: "v1.21.0-1"
 ```
 
 ## Example playbook

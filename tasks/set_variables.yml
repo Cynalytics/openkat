@@ -25,7 +25,8 @@
     lxd_user_check: {"ansible_facts": {"getent_passwd": {}}}
   when: ansible_check_mode
 
-- debug:
+- name: debug
+  ansible.builtin.debug:
     msg: "LXD user check result: {{ lxd_user_check }}"
 
 - name: Set lxd user to lxd
@@ -33,6 +34,9 @@
     lxd_user: lxd
   when:
     - "'lxd' in lxd_user_check.ansible_facts.getent_passwd.keys()"
+
+- name: stop
+  ansible.builtin.meta: end_play
 
 - name: Set lxd user to root since lxd user does not exist
   ansible.builtin.set_fact:

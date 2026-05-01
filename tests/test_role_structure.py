@@ -21,6 +21,7 @@ EXPECTED_TASK_ORDER = [
     "normalizer.yml",
     "octopoes_api.yml",
     "octopoes_api_worker.yml",
+    "octopoes_scanprofiles.yml",
     "mula.yml",
     "rocky.yml",
     "rocky_worker.yml",

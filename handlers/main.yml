@@ -43,6 +43,11 @@
     name: openkat_octopoesapiworker.service
     state: restarted
 
+- name: Restart openkat_octopoes_scanprofiles service
+  ansible.builtin.systemd:
+    name: openkat_octopoes_scanprofiles.service
+    state: restarted
+
 - name: Restart openkat_postgres service
   ansible.builtin.systemd:
     name: openkat_postgres.service

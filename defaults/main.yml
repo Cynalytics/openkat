@@ -1,6 +1,6 @@
 ---
 # which release of openkat to install, this will be used for all components, but can be overridden per component if needed
-openkat_version: &openkat_version 'v1.21.0'
+openkat_version: &openkat_version 'v1.22.0'
 # where to pull the OpenKAT docker images from, this should be a repository that contains the OpenKAT images with the same tags as the openkat_version variable
 openkat_docker_repository: 'docker.underdark.nl/librekat'
 openkat_crux_version: 'v1.1.0'
@@ -23,6 +23,7 @@ openkat_mula_version: *openkat_version
 openkat_normalizer_version: *openkat_version
 openkat_octopoes_api_version: *openkat_version
 openkat_octopoes_api_worker_version: *openkat_version
+openkat_octopoes_scanprofiles_version: *openkat_version
 openkat_rocky_version: *openkat_version
 openkat_rocky_worker_version: *openkat_version
 

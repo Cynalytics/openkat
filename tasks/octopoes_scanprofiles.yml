@@ -1,0 +1,46 @@
+- name: Create srv directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - "{{ openkat_service_root }}/"
+    - "{{ openkat_service_root }}/octopoesscanprofiles/"
+
+- name: Create octopoes scanprofiles compose file
+  ansible.builtin.template:
+    src: "octopoes_scanprofiles_docker-compose.yml.j2"
+    dest: "{{ openkat_service_root }}/octopoesscanprofiles/docker-compose.yml"
+    owner: root
+    group: root
+    mode: '0640'
+  notify: Restart openkat_octopoes_scanprofiles service
+
+- name: Create systemd Unit file for octopoes scanprofiles service
+  ansible.builtin.template:
+    src: "octopoes_scanprofiles.service.j2"
+    dest: /etc/systemd/system/openkat_octopoes_scanprofiles.service
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart openkat_octopoes_scanprofiles service
+
+- name: Enable openkat_octopoes_scanprofiles service
+  ansible.builtin.systemd:
+    name: openkat_octopoes_scanprofiles.service
+    enabled: true
+    daemon_reload: true # In case the service file was changed
+    state: started
+    no_block: true
+
+- name: Wait until octopoes_scanprofiles service is active (might take a few tries as it needs to pull the docker image on first run)
+  ansible.builtin.systemd:
+    name: openkat_octopoes_scanprofiles.service
+  register: svc_state
+  retries: 25
+  delay: 10
+  until: svc_state.status.ActiveState == 'active'
+  changed_when: false
+  when: not ansible_check_mode

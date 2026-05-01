@@ -40,10 +40,16 @@ roles:
     - cynalytics.openkat
 ```
 
+## loging in
+
+After you have run the the role, a password has been created for the superuser. It can be found in the file `/etc/openkat/rocky/rocky_superuser_password` on the server. The login username can be found in `/etc/openkat/rocky/rocky_superuser_email` (which is `john.doe@example.com` in this example)
+
 
 ## Versioning
 
-This role uses the same version as the Openkat project, with a postfix indicating the role version: version v1.21.0-1 will install Openkat v1.21.0
+This role uses the same version as the Openkat project, with a postfix indicating the role version: version v1.22.0-1 will install Openkat v1.22.0
+
+See [CHANGELOG.md](CHANGELOG.md) for release-to-release functional changes.
 
 ## Traefik Proxying
 
@@ -86,7 +92,7 @@ Role task flow (high level):
    - `traefik`
    - `postgres`
    - `rabbitmq`
-   - application services (`bytes`, `boefje`, `crux`, `katalogus`, `normalizer`, `octopoes_api`, `octopoes_api_worker`, `mula`, `rocky`, `rocky_worker`)
+   - application services (`bytes`, `boefje`, `crux`, `katalogus`, `normalizer`, `octopoes_api`, `octopoes_api_worker`, `octopoes_scanprofiles`, `mula`, `rocky`, `rocky_worker`)
 
 ### systemd + Docker Compose model
 
@@ -132,6 +138,7 @@ Most service tasks:
 | `openkat_normalizer_version` | `openkat_version` | specific version for normalizer service |
 | `openkat_octopoes_api_version` | `openkat_version` | specific version for octpous_api service |
 | `openkat_octopoes_api_worker_version` | `openkat_version` | specific version for octopus_api_worker service |
+| `openkat_octopoes_scanprofiles_version` | `openkat_version` | specific version for octopoes_scanprofiles service |
 | `openkat_rocky_version` | `openkat_version` | specific version for rocky service |
 | `openkat_rocky_worker_version` | `openkat_version` | specific version for rocky_worker service |
 | `openkat_rocky_database`  | `openkat_rocky_user` | database for rocky service |

@@ -20,19 +20,25 @@
   failed_when: false
   when: not ansible_check_mode
 
+- name: Create dummy output in check mode for lxd user check
+  ansible.builtin.set_fact:
+    lxd_user_check: {"ansible_facts": {"getent_passwd": {}}}
+  when: ansible_check_mode
+
+# when the getent check succeeds, the lxd_user_check variable will have ansible facts key, but when it fails
+# it will have a msg key with the error message, so we can check for the presence of the msg key to determine if the lxd user exists
+
 - name: Set lxd user to lxd
   ansible.builtin.set_fact:
     lxd_user: lxd
   when:
-    - "'could not be found' not in lxd_user_check.msg"
-    - not ansible_check_mode
+    - "'msg' not in lxd_user_check"
 
 - name: Set lxd user to root since lxd user does not exist
   ansible.builtin.set_fact:
     lxd_user: root
   when:
-    - "'could not be found' in lxd_user_check.msg"
-    - not ansible_check_mode
+    - "'msg' in lxd_user_check"
 
 # do the same for the docker group
 - name: Check if docker group exists
@@ -44,16 +50,19 @@
   failed_when: false
   when: not ansible_check_mode
 
+- name: Create dummy output in check mode for docker group check
+  ansible.builtin.set_fact:
+    docker_group_check: {"ansible_facts": {"getent_group": {}}}
+  when: ansible_check_mode
+
 - name: Set docker group to docker
   ansible.builtin.set_fact:
     docker_group: docker
   when:
-    - "'could not be found' not in docker_group_check.msg"
-    - not ansible_check_mode
+    - "'msg' not in docker_group_check"
 
 - name: Set docker group to root since docker group does not exist
   ansible.builtin.set_fact:
     docker_group: root
   when:
-    - "'could not be found' in docker_group_check.msg"
-    - not ansible_check_mode
+    - "'msg' in docker_group_check"

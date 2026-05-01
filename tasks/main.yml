@@ -45,6 +45,9 @@
 - name: OpenKAT octopoes api worker
   ansible.builtin.include_tasks: octopoes_api_worker.yml
 
+- name: OpenKAT octopoes scanprofiles
+  ansible.builtin.include_tasks: octopoes_scanprofiles.yml
+
 - name: OpenKAT mula
   ansible.builtin.include_tasks: mula.yml
 

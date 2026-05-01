@@ -25,6 +25,9 @@
     lxd_user_check: {"ansible_facts": {"getent_passwd": {}}}
   when: ansible_check_mode
 
+- debug:
+    msg: "LXD user check result: {{ lxd_user_check }}"
+
 - name: Set lxd user to lxd
   ansible.builtin.set_fact:
     lxd_user: lxd

@@ -4,7 +4,7 @@ _manage_openkat() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="create list-users remove change-password create-organization remove-organization list-organizations add-network add-hostname add-ip list-objects remove-object install-completion"
+    commands="create list-users remove change-password disable-2fa create-organization remove-organization list-organizations add-network add-hostname add-ip list-objects remove-object install-completion"
 
     # Complete --org at top level
     if [[ "${cur}" == -* && ${COMP_CWORD} -le 2 ]]; then
@@ -45,6 +45,9 @@ _manage_openkat() {
             ;;
         change-password)
             COMPREPLY=($(compgen -W "--email --password" -- "${cur}"))
+            ;;
+        disable-2fa)
+            COMPREPLY=($(compgen -W "--email --force" -- "${cur}"))
             ;;
         create-organization)
             COMPREPLY=($(compgen -W "--name --code" -- "${cur}"))

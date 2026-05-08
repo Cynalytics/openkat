@@ -1,8 +1,14 @@
 # Changelog
 
 All notable functional changes for this role are documented in this file.
+## 1.22.0-2 (compared to 1.22.0-1)
 
-## 1.22.0 (compared to 1.21.0)
+### Changed
+
+- The manage_openkat.py commandline script has a new option `disable-2fa` facilitating resetting 2fa for users that have lost access to 2fa devices
+
+
+## 1.22.0-1 (compared to 1.21.0-1)
 
 ### Added
 
@@ -25,5 +31,5 @@ All notable functional changes for this role are documented in this file.
 
 ### Compatibility and upgrade notes
 
-- This release is additive for runtime behavior and introduces no known breaking changes relative to 1.21.0
+- This release is additive for runtime behavior and introduces no known breaking changes relative to 1.21.0-1
 - After upgrade, one additional service is expected to be present and active on the target host: openkat_octopoes_scanprofiles.service.

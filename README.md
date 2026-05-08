@@ -158,8 +158,6 @@ Most service tasks:
 
 - `openkat_rocky_debug`
 - `openkat_rocky_2fa`
-- `openkat_rocky_worker_debug`
-- `openkat_rocky_worker_2fa`
 
 
 ## Persistent Password Generation and Rotation

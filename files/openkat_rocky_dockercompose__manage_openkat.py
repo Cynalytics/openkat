@@ -763,6 +763,81 @@ else:
             print(f"Error: {e}", file=sys.stderr)
             return False
 
+    def disable_two_factor(self, email, force=False):
+        """
+        Disable two-factor authentication for a user by deleting all
+        OTP devices (TOTP + static backup tokens).
+
+        Use this to recover access for a user who has lost their MFA device.
+        Verify the user's identity out-of-band before running.
+
+        Args:
+            email: Email address of the user
+            force: Skip confirmation prompt
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            container_id = self.get_container_id()
+            print(f"Using container: {container_id}")
+
+            email_lower = email.lower()
+
+            if not self.user_exists(email_lower):
+                print(f"User with email '{email_lower}' does not exist.")
+                return False
+
+            if not force:
+                answer = input(f"Are you sure you want to disable 2FA for '{email_lower}'? [y/N] ")
+                if answer.lower() != 'y':
+                    print("Aborted.")
+                    return False
+
+            disable_cmd = """
+from django.contrib.auth import get_user_model
+from django_otp.plugins.otp_totp.models import TOTPDevice
+from django_otp.plugins.otp_static.models import StaticDevice
+from django.db import transaction
+User = get_user_model()
+user = User.objects.filter(email__iexact={email}).first()
+if not user:
+    print('USER_NOT_FOUND')
+    raise SystemExit(1)
+with transaction.atomic():
+    totp_deleted = TOTPDevice.objects.filter(user=user).delete()[0]
+    static_deleted = StaticDevice.objects.filter(user=user).delete()[0]
+print(f'DISABLED: totp={{totp_deleted}} static={{static_deleted}}')
+""".format(email=repr(email_lower))
+
+            cmd = [
+                "docker", "exec",
+                container_id,
+                "python", self.manage_py_path,
+                "shell", "-c",
+                disable_cmd
+            ]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                raise RuntimeError(f"Failed to disable 2FA: {result.stderr}")
+
+            if "USER_NOT_FOUND" in result.stdout:
+                raise RuntimeError(f"User with email '{email_lower}' not found during 2FA disable.")
+
+            for line in result.stdout.strip().split('\n'):
+                if line.startswith("DISABLED:"):
+                    stats = line.split("DISABLED: ", 1)[1]
+                    print(f"✓ 2FA disabled for '{email_lower}' ({stats})")
+                    return True
+
+            raise RuntimeError(f"Unexpected output: {result.stdout}")
+
+        except RuntimeError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return False
+
     def add_ooi_network(self, org_code, name):
         """
         Add a Network OOI object to an organization via OctoPoes.
@@ -1061,7 +1136,7 @@ BASH_COMPLETION = r'''_manage_openkat() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="create list-users remove change-password create-organization remove-organization list-organizations add-network add-hostname add-ip list-objects remove-object install-completion"
+    commands="create list-users remove change-password disable-2fa create-organization remove-organization list-organizations add-network add-hostname add-ip list-objects remove-object install-completion"
 
     # Complete --org at top level
     if [[ "${cur}" == -* && ${COMP_CWORD} -le 2 ]]; then
@@ -1102,6 +1177,9 @@ BASH_COMPLETION = r'''_manage_openkat() {
             ;;
         change-password)
             COMPREPLY=($(compgen -W "--email --password" -- "${cur}"))
+            ;;
+        disable-2fa)
+            COMPREPLY=($(compgen -W "--email --force" -- "${cur}"))
             ;;
         create-organization)
             COMPREPLY=($(compgen -W "--name --code" -- "${cur}"))
@@ -1229,6 +1307,11 @@ def main():
     change_pwd_parser.add_argument("--email", required=True, help="Email address of the superuser")
     change_pwd_parser.add_argument("--password", required=True, help="New password for the superuser")
 
+    # Disable 2FA command
+    disable_2fa_parser = subparsers.add_parser("disable-2fa", help="Disable two-factor authentication for a user (MFA recovery)")
+    disable_2fa_parser.add_argument("--email", required=True, help="Email address of the user")
+    disable_2fa_parser.add_argument("--force", action="store_true", help="Skip confirmation prompt")
+
     # Create organization command
     create_org_parser = subparsers.add_parser("create-organization", help="Create a new organization")
     create_org_parser.add_argument("--name", required=True, help="Display name for the organization")
@@ -1332,6 +1415,10 @@ def main():
 
     elif args.command == "change-password":
         success = manager.change_password(args.email, args.password)
+        sys.exit(0 if success else 1)
+
+    elif args.command == "disable-2fa":
+        success = manager.disable_two_factor(args.email, args.force)
         sys.exit(0 if success else 1)
 
     elif args.command == "create-organization":

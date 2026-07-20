@@ -1,6 +1,13 @@
 # Changelog
 
 All notable functional changes for this role are documented in this file.
+
+## Unreleased
+
+### Added
+
+- Installs `openkat-report`, a host CLI to list reports and fetch full report JSON from the local octopoes/bytes APIs (`openkat-report list` / `get [selector]`).
+
 ## 1.22.0-2 (compared to 1.22.0-1)
 
 ### Changed

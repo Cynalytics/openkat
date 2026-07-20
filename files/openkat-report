@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+# openkat-report — lijst OpenKAT-rapporten en haal de volledige rapport-JSON op.
+#
+#   Bron 1: octopoes  http://127.0.0.1:8001/<org>/reports   -> lijst + data_raw_id (metadata)
+#   Bron 2: bytes     http://127.0.0.1:8002/bytes/raw/<id>  -> de volledige gerenderde rapport-JSON
+#
+# Beide API's luisteren alleen op localhost; dit script moet daarom OP de host draaien.
+# Root is nodig (docker + bytes-credentials); zonder root her-exec't het script zichzelf via sudo.
+#
+# Gebruik:
+#   openkat-report list [-o ORG] [-n AANTAL]      # genummerde lijst, nieuwste bovenaan
+#   openkat-report get  [-o ORG] [SELECTOR]       # volledige JSON naar stdout
+#   openkat-report meta [-o ORG] [SELECTOR]       # alleen de octopoes-metadata (JSON)
+#
+# SELECTOR (voor get/meta):
+#   (leeg) of 'latest'   -> het nieuwste rapport
+#   een nummer (1,2,..)  -> regelnummer uit 'list' (1 = nieuwste)
+#   een raw-id (uuid)    -> haalt die bytes-raw rechtstreeks op
+#
+# Opties:
+#   -o ORG   organisatiecode (default: autodetectie; verplicht bij meerdere orgs)
+#   -n N     aantal in 'list' (default 50)
+#   -t TIME  valid_time override (ISO 8601, bv. 2026-07-20T12:00:00Z; default: nu)
+set -euo pipefail
+
+OCTOPOES_URL="http://127.0.0.1:8001"
+BYTES_URL="http://127.0.0.1:8002"
+
+die() { echo "openkat-report: $*" >&2; exit 1; }
+
+# --- root vereist (docker + bytes-creds) -----------------------------------
+if [ "$(id -u)" -ne 0 ]; then exec sudo -- "$0" "$@"; fi
+
+command -v python3 >/dev/null 2>&1 || die "python3 niet gevonden"
+command -v curl    >/dev/null 2>&1 || die "curl niet gevonden"
+
+# --- argument parsing ------------------------------------------------------
+ORG=""; LIMIT=50; VALID_TIME=""
+CMD="${1:-}"; [ -n "$CMD" ] && shift || true
+case "$CMD" in list|get|meta) ;; ""|-h|--help|help)
+  sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  *) die "onbekend commando '$CMD' (gebruik: list | get | meta)";; esac
+
+SELECTOR="latest"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -o) ORG="${2:-}"; shift 2;;
+    -n) LIMIT="${2:-}"; shift 2;;
+    -t) VALID_TIME="${2:-}"; shift 2;;
+    -h|--help) sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+    -*) die "onbekende optie '$1'";;
+    *) SELECTOR="$1"; shift;;
+  esac
+done
+
+# valid_time: 'Z'-vorm; een '+' offset zou in de query-string als spatie worden gelezen.
+[ -n "$VALID_TIME" ] || VALID_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+# --- organisatie autodetecteren (via rocky) --------------------------------
+detect_org() {
+  local c
+  c="$(docker ps --format '{{.Names}}' | grep -i rocky | grep -vi worker | head -1)" || true
+  [ -n "$c" ] || return 1
+  docker exec "$c" python manage.py shell -c \
+    'from tools.models import Organization; print("\n".join(o.code for o in Organization.objects.all()))' \
+    2>/dev/null
+}
+if [ -z "$ORG" ]; then
+  mapfile -t _orgs < <(detect_org || true)
+  case "${#_orgs[@]}" in
+    0) die "kon geen organisatie detecteren; geef er een op met -o ORG";;
+    1) ORG="${_orgs[0]}";;
+    *) die "meerdere organisaties gevonden: ${_orgs[*]}; kies er een met -o ORG";;
+  esac
+fi
+
+# --- octopoes: rapportlijst ophalen ----------------------------------------
+octopoes_list() {
+  curl -sf "$OCTOPOES_URL/$ORG/reports?limit=$LIMIT&valid_time=$VALID_TIME" \
+    || die "octopoes-request faalde (org '$ORG', poort 8001 bereikbaar?)"
+}
+
+# --- bytes: creds (uit draaiende container, met compose als fallback) ------
+bytes_creds() {  # echoot username op regel 1, password op regel 2
+  local c
+  c="$(docker ps --format '{{.Names}}' | grep -i bytes | grep -vi worker | head -1)" || true
+  if [ -n "$c" ] && docker exec "$c" printenv BYTES_USERNAME BYTES_PASSWORD 2>/dev/null; then
+    return 0
+  fi
+  local f u p
+  for f in /opt/openkat/bytes/docker-compose.yml /srv/bytes/docker-compose.yml; do
+    [ -r "$f" ] || continue
+    u="$(sed -nE 's/.*BYTES_USERNAME=["'"'"' ]*([^"'"'"' ]+).*/\1/p' "$f" | head -1)"
+    p="$(sed -nE 's/.*BYTES_PASSWORD=["'"'"' ]*([^"'"'"' ]+).*/\1/p' "$f" | head -1)"
+    [ -n "$u" ] && [ -n "$p" ] && { printf '%s\n%s\n' "$u" "$p"; return 0; }
+  done
+  return 1
+}
+
+bytes_token() {
+  local creds u p
+  creds="$(bytes_creds)" || die "kon bytes-credentials niet vinden (container noch compose)"
+  u="$(printf '%s\n' "$creds" | sed -n '1p')"
+  p="$(printf '%s\n' "$creds" | sed -n '2p')"
+  curl -sf -X POST "$BYTES_URL/token" \
+    -H 'content-type: application/x-www-form-urlencoded' \
+    --data-urlencode "username=$u" \
+    --data-urlencode "password=$p" \
+    | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])' \
+    || die "bytes-login faalde"
+}
+
+fetch_raw() {  # $1 = raw_id
+  local tok; tok="$(bytes_token)"
+  curl -sf "$BYTES_URL/bytes/raw/$1" -H "Authorization: bearer $tok" \
+    || die "bytes-raw $1 ophalen faalde"
+}
+
+# --- SELECTOR -> raw_id (+ meta) resolven -----------------------------------
+UUID_RE='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+
+case "$CMD" in
+  list)
+    octopoes_list | python3 -c '
+import sys, json
+d = json.load(sys.stdin)
+items = d.get("items", [])
+print("# %d van %s rapport(en) — nieuwste eerst" % (len(items), d.get("count")))
+print("%2s  %-27s  %-34s  %s" % ("#", "gegenereerd", "type", "raw-id"))
+for i, it in enumerate(items, 1):
+    print("%2d  %-27s  %-34s  %s" % (i, str(it.get("date_generated")), str(it.get("report_type")), it.get("data_raw_id")))
+    print("    " + str(it.get("name")))
+'
+    ;;
+  get|meta)
+    if [[ "$SELECTOR" =~ $UUID_RE ]]; then
+      RAW_ID="$SELECTOR"; META="null"
+    else
+      RESOLVED="$(octopoes_list | SEL="$SELECTOR" python3 -c '
+import sys, os, json
+sel = os.environ["SEL"]
+idx = 1 if sel in ("", "latest") else None
+if idx is None:
+    try: idx = int(sel)
+    except ValueError: sys.exit("ongeldige selector: %s" % sel)
+items = json.load(sys.stdin).get("items", [])
+if not items: sys.exit("geen rapporten gevonden")
+if idx < 1 or idx > len(items): sys.exit("selector %d buiten bereik (1..%d)" % (idx, len(items)))
+it = items[idx-1]
+print(it["data_raw_id"])
+print(json.dumps(it))
+')" || exit 1
+      RAW_ID="$(printf '%s\n' "$RESOLVED" | sed -n '1p')"
+      META="$(printf '%s\n' "$RESOLVED" | sed -n '2p')"
+    fi
+    if [ "$CMD" = "meta" ]; then
+      [ "$META" = "null" ] && die "meta niet beschikbaar bij directe raw-id; gebruik een regelnummer"
+      printf '%s\n' "$META" | python3 -m json.tool
+    else
+      fetch_raw "$RAW_ID" | python3 -m json.tool
+    fi
+    ;;
+esac

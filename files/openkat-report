@@ -8,25 +8,33 @@
 # Root is nodig (docker + bytes-credentials); zonder root her-exec't het script zichzelf via sudo.
 #
 # Gebruik:
-#   openkat-report list [-o ORG] [-n AANTAL]      # genummerde lijst, nieuwste bovenaan
-#   openkat-report get  [-o ORG] [SELECTOR]       # volledige JSON naar stdout
-#   openkat-report meta [-o ORG] [SELECTOR]       # alleen de octopoes-metadata (JSON)
+#   openkat-report list     [-o ORG] [-n AANTAL]         # genummerde lijst, nieuwste bovenaan
+#   openkat-report get      [-o ORG] [SELECTOR]          # de bytes-raw van dit rapport (letterlijk)
+#   openkat-report meta     [-o ORG] [SELECTOR]          # alleen de octopoes-metadata (JSON)
+#   openkat-report findings [-o ORG] [--full] [SELECTOR] # findings samengevoegd uit alle sub-reports
 #
-# SELECTOR (voor get/meta):
+# SELECTOR (voor get/meta/findings):
 #   (leeg) of 'latest'   -> het nieuwste rapport
 #   een nummer (1,2,..)  -> regelnummer uit 'list' (1 = nieuwste)
-#   een raw-id (uuid)    -> haalt die bytes-raw rechtstreeks op
+#   een raw-id (uuid)    -> get/meta: die bytes-raw rechtstreeks; findings: het top-level rapport met dat raw-id
+#
+# 'findings' lost een concatenated/multi-report op naar zijn asset-reports en voegt hun
+# report_data samen tot een compacte JSON (findings, severity, occurrences, summary).
+# Bij een rapport zonder sub-reports (bv. aggregate) valt het terug op de parent-raw.
 #
 # Opties:
-#   -o ORG   organisatiecode (default: autodetectie; verplicht bij meerdere orgs)
-#   -n N     aantal in 'list' (default 50)
-#   -t TIME  valid_time override (ISO 8601, bv. 2026-07-20T12:00:00Z; default: nu)
+#   -o ORG    organisatiecode (default: autodetectie; verplicht bij meerdere orgs)
+#   -n N      aantal in 'list' (default 50)
+#   -t TIME   valid_time override (ISO 8601, bv. 2026-07-20T12:00:00Z; default: nu)
+#   --full    (findings) neem per sub-report de volledige raw mee (report_data + input_data)
+#             plus de parent input_data, i.p.v. alleen report_data
 set -euo pipefail
 
 OCTOPOES_URL="http://127.0.0.1:8001"
 BYTES_URL="http://127.0.0.1:8002"
 
 die() { echo "openkat-report: $*" >&2; exit 1; }
+show_help() { awk 'NR==1{next} /^#/{sub(/^# ?/,"");print;next} {exit}' "$0"; }
 
 # --- root vereist (docker + bytes-creds) -----------------------------------
 if [ "$(id -u)" -ne 0 ]; then exec sudo -- "$0" "$@"; fi
@@ -37,17 +45,18 @@ command -v curl    >/dev/null 2>&1 || die "curl niet gevonden"
 # --- argument parsing ------------------------------------------------------
 ORG=""; LIMIT=50; VALID_TIME=""
 CMD="${1:-}"; [ -n "$CMD" ] && shift || true
-case "$CMD" in list|get|meta) ;; ""|-h|--help|help)
-  sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-  *) die "onbekend commando '$CMD' (gebruik: list | get | meta)";; esac
+case "$CMD" in list|get|meta|findings) ;; ""|-h|--help|help)
+  show_help; exit 0 ;;
+  *) die "onbekend commando '$CMD' (gebruik: list | get | meta | findings)";; esac
 
-SELECTOR="latest"
+SELECTOR="latest"; FULL=0
 while [ $# -gt 0 ]; do
   case "$1" in
     -o) ORG="${2:-}"; shift 2;;
     -n) LIMIT="${2:-}"; shift 2;;
     -t) VALID_TIME="${2:-}"; shift 2;;
-    -h|--help) sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+    --full) FULL=1; shift;;
+    -h|--help) show_help; exit 0;;
     -*) die "onbekende optie '$1'";;
     *) SELECTOR="$1"; shift;;
   esac
@@ -78,6 +87,28 @@ fi
 octopoes_list() {
   curl -sf "$OCTOPOES_URL/$ORG/reports?limit=$LIMIT&valid_time=$VALID_TIME" \
     || die "octopoes-request faalde (org '$ORG', poort 8001 bereikbaar?)"
+}
+
+# resolve SELECTOR naar het volledige octopoes report-item (1 regel JSON)
+resolve_item() {
+  octopoes_list | SEL="$SELECTOR" python3 -c '
+import sys, os, json, re
+sel = os.environ["SEL"]
+items = json.load(sys.stdin).get("items", [])
+if not items: sys.exit("geen rapporten gevonden")
+if re.match(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", sel):
+    m = [it for it in items if it.get("data_raw_id") == sel]
+    if not m: sys.exit("geen top-level rapport met data_raw_id %s (mogelijk een sub-report raw)" % sel)
+    it = m[0]
+else:
+    idx = 1 if sel in ("", "latest") else None
+    if idx is None:
+        try: idx = int(sel)
+        except ValueError: sys.exit("ongeldige selector: %s" % sel)
+    if idx < 1 or idx > len(items): sys.exit("selector %d buiten bereik (1..%d)" % (idx, len(items)))
+    it = items[idx-1]
+print(json.dumps(it))
+'
 }
 
 # --- bytes: creds (uit draaiende container, met compose als fallback) ------
@@ -159,5 +190,51 @@ print(json.dumps(it))
     else
       fetch_raw "$RAW_ID" | python3 -m json.tool
     fi
+    ;;
+  findings)
+    ITEM="$(resolve_item)" || exit 1
+    TOK="$(bytes_token)"
+    printf '%s' "$ITEM" | ITEM_TOK="$TOK" ITEM_BASE="$BYTES_URL" ITEM_FULL="$FULL" python3 -c '
+import sys, os, json, urllib.request
+item = json.load(sys.stdin)
+tok  = os.environ["ITEM_TOK"]
+base = os.environ["ITEM_BASE"]
+full = os.environ["ITEM_FULL"] == "1"
+
+def fetch(raw_id):
+    req = urllib.request.Request(base + "/bytes/raw/" + raw_id,
+                                 headers={"Authorization": "bearer " + tok})
+    with urllib.request.urlopen(req) as r:
+        return json.loads(r.read())
+
+meta_keys = ("name", "report_type", "date_generated", "reference_date",
+             "organization_code", "data_raw_id")
+out = {"report": {k: item.get(k) for k in meta_keys}}
+
+assets = [a for a in (item.get("input_oois") or [])
+          if isinstance(a, dict) and a.get("data_raw_id")]
+
+if assets:
+    reports = []
+    for a in assets:
+        raw = fetch(a["data_raw_id"])
+        entry = {"input_ooi": a.get("input_ooi"),
+                 "report_type": a.get("report_type"),
+                 "data_raw_id": a.get("data_raw_id")}
+        if full:
+            entry["raw"] = raw
+        else:
+            entry["report_data"] = raw.get("report_data", raw)
+        reports.append(entry)
+    out["asset_reports"] = reports
+    if full:
+        out["input_data"] = fetch(item["data_raw_id"]).get("input_data")
+else:
+    # geen sub-reports (bv. aggregate-report): de parent-raw bevat de data zelf
+    out["report_data"] = fetch(item["data_raw_id"])
+
+json.dump(out, sys.stdout, ensure_ascii=False)
+sys.stdout.write("\n")
+' || die "findings samenstellen faalde"
     ;;
 esac

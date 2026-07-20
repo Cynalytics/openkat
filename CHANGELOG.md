@@ -6,7 +6,7 @@ All notable functional changes for this role are documented in this file.
 
 ### Added
 
-- Installs `openkat-report`, a host CLI to list reports and fetch full report JSON from the local octopoes/bytes APIs (`openkat-report list` / `get [selector]`).
+- Installs `openkat-report`, a host CLI to list reports and fetch report JSON from the local octopoes/bytes APIs (`openkat-report list` / `get` / `meta` / `findings`). The `findings [--full]` subcommand resolves a concatenated/multi report to its asset sub-reports and merges their report_data (findings, severity, occurrences, summary) into a single JSON document.
 
 ## 1.22.0-2 (compared to 1.22.0-1)
 

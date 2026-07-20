@@ -7,6 +7,14 @@
     owner: root
     group: root
 
+# The script ships a default compose path; make it follow the configured service root
+# so `manage_openkat <cmd>` works without --compose-file on any openkat_service_root.
+- name: Point manage_openkat default compose-file at the configured service root
+  ansible.builtin.replace:
+    path: /usr/local/sbin/manage_openkat
+    regexp: '(?:/srv|/opt/openkat)/rocky/docker-compose\.yml'
+    replace: '{{ openkat_service_root }}/rocky/docker-compose.yml'
+
 - name: Make sure bas_completion.d exists
   ansible.builtin.file:
     path: /etc/bash_completion.d

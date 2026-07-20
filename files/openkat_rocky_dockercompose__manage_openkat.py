@@ -1260,8 +1260,8 @@ def main():
 
     parser.add_argument(
         "--compose-file",
-        default="/srv/rocky/docker-compose.yml",
-        help="Path to docker-compose.yml file (default: /srv/rocky/docker-compose.yml)"
+        default="/opt/openkat/rocky/docker-compose.yml",
+        help="Path to docker-compose.yml file (default: /opt/openkat/rocky/docker-compose.yml)"
     )
 
     parser.add_argument(

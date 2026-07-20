@@ -1,6 +1,13 @@
 # Changelog
 
 All notable functional changes for this role are documented in this file.
+
+## Unreleased
+
+### Fixed
+
+- `manage_openkat` no longer defaults its `--compose-file` to `/srv/rocky/docker-compose.yml`, which does not match the role's `openkat_service_root` (default `/opt/openkat`). Running `manage_openkat <command>` without `--compose-file` failed with "Docker compose file not found". The script default is now `/opt/openkat/...` and the role rewrites the path to follow `openkat_service_root` on install.
+
 ## 1.22.0-2 (compared to 1.22.0-1)
 
 ### Changed

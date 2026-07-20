@@ -13,6 +13,8 @@
 #   openkat-report meta     [-o ORG] [SELECTOR]          # alleen de octopoes-metadata (JSON)
 #   openkat-report findings [-o ORG] [--full] [SELECTOR] # findings samengevoegd uit alle sub-reports
 #   openkat-report history  [-o ORG] [--full] REFERENCE  # bitemporele transactie-tijdslijn van een OOI
+#   openkat-report timeline [-o ORG] [--from D] [--to D] [--step N] REFERENCE
+#                                                        # aan/afwezig + severity per tijdstap voor een finding
 #
 # SELECTOR (voor get/meta/findings):
 #   (leeg) of 'latest'   -> het nieuwste rapport
@@ -37,6 +39,9 @@
 #   -t TIME   valid_time override (ISO 8601, bv. 2026-07-20T12:00:00Z; default: nu)
 #   --full    (findings) neem per sub-report de volledige raw mee (report_data + input_data)
 #             plus de parent input_data, i.p.v. alleen report_data
+#   --from D  (timeline) startdatum (YYYY-MM-DD of ISO; default: to - 90 dagen)
+#   --to D    (timeline) einddatum (default: nu)
+#   --step N  (timeline) stap in dagen tussen samples (default: 7)
 set -euo pipefail
 
 OCTOPOES_URL="http://127.0.0.1:8001"
@@ -54,17 +59,20 @@ command -v curl    >/dev/null 2>&1 || die "curl niet gevonden"
 # --- argument parsing ------------------------------------------------------
 ORG=""; LIMIT=50; VALID_TIME=""
 CMD="${1:-}"; [ -n "$CMD" ] && shift || true
-case "$CMD" in list|get|meta|findings|history) ;; ""|-h|--help|help)
+case "$CMD" in list|get|meta|findings|history|timeline) ;; ""|-h|--help|help)
   show_help; exit 0 ;;
-  *) die "onbekend commando '$CMD' (gebruik: list | get | meta | findings | history)";; esac
+  *) die "onbekend commando '$CMD' (gebruik: list | get | meta | findings | history | timeline)";; esac
 
-SELECTOR="latest"; FULL=0
+SELECTOR="latest"; FULL=0; FROM_TS=""; TO_TS=""; STEP=""
 while [ $# -gt 0 ]; do
   case "$1" in
     -o) ORG="${2:-}"; shift 2;;
     -n) LIMIT="${2:-}"; shift 2;;
     -t) VALID_TIME="${2:-}"; shift 2;;
     --full) FULL=1; shift;;
+    --from) FROM_TS="${2:-}"; shift 2;;
+    --to) TO_TS="${2:-}"; shift 2;;
+    --step) STEP="${2:-}"; shift 2;;
     -h|--help) show_help; exit 0;;
     -*) die "onbekende optie '$1'";;
     *) SELECTOR="$1"; shift;;
@@ -253,5 +261,66 @@ sys.stdout.write("\n")
     curl -sf "$OCTOPOES_URL/$ORG/object-history?reference=$REFENC&sort_order=asc&with_docs=$WITHDOCS" \
       || die "object-history faalde (bestaat de referentie '$SELECTOR' in org '$ORG'?)"
     echo
+    ;;
+  timeline)
+    [ "$SELECTOR" = "latest" ] && die "timeline vereist een OOI-referentie, bv. 'Finding|Hostname|internet|example.com|KAT-NO-DNSSEC'"
+    TL_BASE="$OCTOPOES_URL" TL_ORG="$ORG" TL_REF="$SELECTOR" \
+    TL_FROM="$FROM_TS" TL_TO="$TO_TS" TL_STEP="$STEP" python3 -c '
+import os, sys, json, urllib.request, urllib.error, urllib.parse
+from datetime import datetime, timezone, timedelta
+
+base = os.environ["TL_BASE"]; org = os.environ["TL_ORG"]; ref = os.environ["TL_REF"]
+try:
+    step = int(os.environ.get("TL_STEP") or 7)
+except ValueError:
+    sys.exit("--step moet een getal (dagen) zijn")
+if step < 1: sys.exit("--step moet >= 1 zijn")
+
+def parse_dt(s, default):
+    if not s: return default
+    s = s.strip()
+    if len(s) == 10: s += "T00:00:00Z"
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00")).astimezone(timezone.utc)
+    except ValueError:
+        sys.exit("ongeldige datum: %s (gebruik YYYY-MM-DD of ISO 8601)" % s)
+
+to  = parse_dt(os.environ.get("TL_TO"), datetime.now(timezone.utc))
+frm = parse_dt(os.environ.get("TL_FROM"), to - timedelta(days=90))
+if frm > to: sys.exit("--from ligt na --to")
+
+def get(reference, vt):
+    url = "%s/%s/object?reference=%s&valid_time=%s" % (
+        base, org, urllib.parse.quote(reference, safe=""), vt)
+    try:
+        with urllib.request.urlopen(url) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        if e.code == 404: return None
+        raise
+
+samples = []
+t = frm
+while t <= to:
+    vt = t.strftime("%Y-%m-%dT%H:%M:%SZ")
+    obj = get(ref, vt)
+    ftype = sev = score = None
+    if obj is not None:
+        ftype = obj.get("finding_type")
+        if ftype:
+            ft = get(ftype, vt)
+            if ft:
+                sev = ft.get("risk_severity"); score = ft.get("risk_score")
+    samples.append({"valid_time": vt, "present": obj is not None,
+                    "finding_type": ftype, "risk_severity": sev, "risk_score": score})
+    t += timedelta(days=step)
+
+json.dump({"reference": ref,
+           "from": frm.strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "to": to.strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "step_days": step, "samples": samples},
+          sys.stdout, ensure_ascii=False)
+sys.stdout.write("\n")
+' || exit 1
     ;;
 esac

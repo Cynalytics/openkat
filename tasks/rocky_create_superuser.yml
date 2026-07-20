@@ -7,6 +7,14 @@
     owner: root
     group: root
 
+- name: Copy OpenKAT report helper script
+  ansible.builtin.copy:
+    src: openkat-report
+    dest: /usr/local/sbin/openkat-report
+    mode: '0755'
+    owner: root
+    group: root
+
 - name: Make sure bas_completion.d exists
   ansible.builtin.file:
     path: /etc/bash_completion.d

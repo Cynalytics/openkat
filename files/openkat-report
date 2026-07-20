@@ -12,6 +12,7 @@
 #   openkat-report get      [-o ORG] [SELECTOR]          # de bytes-raw van dit rapport (letterlijk)
 #   openkat-report meta     [-o ORG] [SELECTOR]          # alleen de octopoes-metadata (JSON)
 #   openkat-report findings [-o ORG] [--full] [SELECTOR] # findings samengevoegd uit alle sub-reports
+#   openkat-report history  [-o ORG] [--full] REFERENCE  # bitemporele transactie-tijdslijn van een OOI
 #
 # SELECTOR (voor get/meta/findings):
 #   (leeg) of 'latest'   -> het nieuwste rapport
@@ -21,6 +22,14 @@
 # 'findings' lost een concatenated/multi-report op naar zijn asset-reports en voegt hun
 # report_data samen tot een compacte JSON (findings, severity, occurrences, summary).
 # Bij een rapport zonder sub-reports (bv. aggregate) valt het terug op de parent-raw.
+#
+# VERLEDEN / TIJDSLIJN (OpenKAT is bitemporeel):
+#   * elk commando accepteert -t TIME om de graf op een eerder tijdstip te bevragen
+#     (valid_time time-travel), bv. 'findings -t 2026-02-20T15:00:00Z ...'.
+#   * 'history REFERENCE' geeft de transactiegeschiedenis van EEN OOI (bv. een Finding|...):
+#     per transactie validTime (werkelijkheidstijd) + txTime; met --full ook het document.
+#     REFERENCE is een volledige OOI-referentie, bv.
+#     'Finding|Hostname|internet|example.com|KAT-NO-DNSSEC'.
 #
 # Opties:
 #   -o ORG    organisatiecode (default: autodetectie; verplicht bij meerdere orgs)
@@ -45,9 +54,9 @@ command -v curl    >/dev/null 2>&1 || die "curl niet gevonden"
 # --- argument parsing ------------------------------------------------------
 ORG=""; LIMIT=50; VALID_TIME=""
 CMD="${1:-}"; [ -n "$CMD" ] && shift || true
-case "$CMD" in list|get|meta|findings) ;; ""|-h|--help|help)
+case "$CMD" in list|get|meta|findings|history) ;; ""|-h|--help|help)
   show_help; exit 0 ;;
-  *) die "onbekend commando '$CMD' (gebruik: list | get | meta | findings)";; esac
+  *) die "onbekend commando '$CMD' (gebruik: list | get | meta | findings | history)";; esac
 
 SELECTOR="latest"; FULL=0
 while [ $# -gt 0 ]; do
@@ -236,5 +245,13 @@ else:
 json.dump(out, sys.stdout, ensure_ascii=False)
 sys.stdout.write("\n")
 ' || die "findings samenstellen faalde"
+    ;;
+  history)
+    [ "$SELECTOR" = "latest" ] && die "history vereist een OOI-referentie, bv. 'Finding|Hostname|internet|example.com|KAT-NO-DNSSEC'"
+    WITHDOCS=false; [ "$FULL" = "1" ] && WITHDOCS=true
+    REFENC="$(REF="$SELECTOR" python3 -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["REF"], safe=""))')"
+    curl -sf "$OCTOPOES_URL/$ORG/object-history?reference=$REFENC&sort_order=asc&with_docs=$WITHDOCS" \
+      || die "object-history faalde (bestaat de referentie '$SELECTOR' in org '$ORG'?)"
+    echo
     ;;
 esac

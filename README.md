@@ -25,7 +25,7 @@ roles:
   - name: geerlingguy.docker
   - name: cynalytics.openkat
     # leave out version to use the latest release
-    version: "v1.22.0-2"
+    version: "v1.22.1-1"
 ```
 
 ## Example playbook
@@ -48,7 +48,7 @@ After you have run the the role, a password has been created for the superuser. 
 
 ## Versioning
 
-This role uses the same version as the Openkat project, with a postfix indicating the role version: version v1.22.0-2 will install Openkat v1.22.0
+This role uses the same version as the Openkat project, with a postfix indicating the role version: version v1.22.1-1 will install Openkat v1.22.1
 
 See [CHANGELOG.md](CHANGELOG.md) for release-to-release functional changes.
 
@@ -126,7 +126,7 @@ Most service tasks:
 | `openkat_superuser_fullname` | empty | REQUIRED full name for generated Superuser for Openkat application |
 | `openkat_superuser_email` | empty | REQUIRED email address for superuser |
 | `openkat_traefik_letsencrypt_admin_email` | empty | REQUIRED email address for Lets Encrypt ceritificates |
-| `openkat_version` |  `v1.22.0` | OpenKAT version to install or upgrade to |
+| `openkat_version` |  `v1.22.1` | OpenKAT version to install or upgrade to |
 | `openkat_docker_repository`| `docker.underdark.nl/librekat` |  Docker registry/repository prefix |
 | `openkat_crux_version`| `v1.1.0` | Version for Crux component |
 | `openkat_service_root`| `/opt/openkat` |  root path for service Compose directories  |

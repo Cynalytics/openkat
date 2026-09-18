@@ -1,6 +1,16 @@
 # Changelog
 
 All notable functional changes for this role are documented in this file.
+
+## 1.22.1-2
+
+### Added
+
+- Added configurable extra public Traefik ports via `openkat_traefik_extra_ports`.
+- Extra ports are now rendered into the Traefik Compose `ports` section.
+- Matching Traefik entrypoints are now rendered as `--entrypoints.<name>.address=:<port>` for named items.
+- Plain numeric items are also supported and automatically receive an entrypoint name in the form `port<port_number>`.
+
 ## 1.22.0-2 (compared to 1.22.0-1)
 
 ### Changed

@@ -54,6 +54,12 @@ openkat_superuser_fullname: ''
 openkat_superuser_email: ''
 openkat_traefik_letsencrypt_admin_email: ''
 
+# Extra Traefik entrypoints/ports to expose publicly.
+# Supported item formats:
+# - { name: "ssh", port: 2222 }
+# - 2222 (name will become "port2222")
+openkat_traefik_extra_ports: []
+
 openkat_required_vars:
   - openkat_superuser_fullname
   - openkat_superuser_email

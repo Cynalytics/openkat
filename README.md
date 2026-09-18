@@ -72,10 +72,38 @@ How proxying works:
    - `security-headers`
    - `rate-limit`
 6. Traefik and services communicate over Docker networks, especially `openkatinternalnetwork`.
+7. Additional public Traefik entrypoints can be configured with `openkat_traefik_extra_ports`.
 
 TLS certificates are managed by Traefik ACME and stored in:
 
 - `${openkat_service_root}/traefik/letsencrypt/acme.json`
+
+### Extra Public Traefik Ports
+
+Use `openkat_traefik_extra_ports` to expose additional ports on the Traefik container and to create matching Traefik entrypoints.
+
+Supported item formats:
+
+- named mapping: `{ name: <entrypoint_name>, port: <port_number> }`
+- plain port number: `<port_number>`
+
+Example:
+
+```yaml
+openkat_traefik_extra_ports:
+   - name: ssh
+      port: 2222
+   - name: mqtt
+      port: 1883
+   - 9000
+```
+
+This example renders:
+
+- docker compose port mappings: `2222:2222`, `1883:1883`, `9000:9000`
+- Traefik command flag: `--entrypoints.ssh.address=:2222`
+- Traefik command flag: `--entrypoints.mqtt.address=:1883`
+- Traefik command flag: `--entrypoints.port9000.address=:9000` (auto-generated name for plain numbers)
 
 ## General OpenKAT Setup
 
@@ -126,6 +154,7 @@ Most service tasks:
 | `openkat_superuser_fullname` | empty | REQUIRED full name for generated Superuser for Openkat application |
 | `openkat_superuser_email` | empty | REQUIRED email address for superuser |
 | `openkat_traefik_letsencrypt_admin_email` | empty | REQUIRED email address for Lets Encrypt ceritificates |
+| `openkat_traefik_extra_ports` | `[]` | Additional public Traefik entrypoints/ports. Items can be `{name, port}` objects or plain port numbers. |
 | `openkat_version` |  `v1.22.0` | OpenKAT version to install or upgrade to |
 | `openkat_docker_repository`| `docker.underdark.nl/librekat` |  Docker registry/repository prefix |
 | `openkat_crux_version`| `v1.1.0` | Version for Crux component |

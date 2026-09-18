@@ -10,6 +10,13 @@ services:
       - "--accesslog=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+    {% for extra_port in openkat_traefik_extra_ports %}
+    {% if extra_port is mapping %}
+      - "--entrypoints.{{ extra_port.name }}.address=:{{ extra_port.port }}"
+    {% else %}
+      - "--entrypoints.port{{ extra_port }}.address=:{{ extra_port }}"
+    {% endif %}
+    {% endfor %}
       - "--certificatesresolvers.letsencrypt.acme.email={{ openkat_traefik_letsencrypt_admin_email }}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
@@ -19,6 +26,13 @@ services:
     ports:
       - "443:443"
       - "80:80"
+    {% for extra_port in openkat_traefik_extra_ports %}
+    {% if extra_port is mapping %}
+      - "{{ extra_port.port }}:{{ extra_port.port }}"
+    {% else %}
+      - "{{ extra_port }}:{{ extra_port }}"
+    {% endif %}
+    {% endfor %}
     volumes:
       - "./letsencrypt:/letsencrypt"
       - "./dynamic.yml:/etc/traefik/dynamic.yml:ro"

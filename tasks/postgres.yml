@@ -56,6 +56,19 @@
   changed_when: false
   when: not ansible_check_mode
 
+# Een actieve unit betekent alleen dat 'docker compose up' draait; bij de eerste start doet
+# de container nog initdb en een herstart voordat hij verbindingen accepteert.
+- name: Wait until postgres accepts connections
+  community.postgresql.postgresql_ping:
+    login_user: "{{ openkat_postgres_admin_user }}"
+  register: openkat_postgres_ping
+  retries: 30
+  delay: 5
+  until: openkat_postgres_ping.is_available | default(false)
+  changed_when: false
+  when:
+    - not ansible_check_mode
+    - openkat_postgres_manage_databases_users
 
 - name: Create Postgresql Databases and Users
   ansible.builtin.include_tasks: postgres_create_databases_users.yml

@@ -45,4 +45,9 @@
   register: create_superuser_result
   changed_when: '"already exist" not in create_superuser_result.stdout'
   failed_when: create_superuser_result.rc != 0
+  # Direct na flush_handlers herstarten de services nog ("container ... is not running");
+  # --only-if-no-superuser-present maakt herhalen veilig.
+  retries: 12
+  delay: 15
+  until: create_superuser_result.rc == 0
   when: not ansible_check_mode

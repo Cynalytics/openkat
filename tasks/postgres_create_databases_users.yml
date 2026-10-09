@@ -12,7 +12,7 @@
 - name: "Create database users"
   community.postgresql.postgresql_user:
     login_user: "{{ openkat_postgres_admin_user }}"
-    db: "{{ item.db }}"
+    login_db: "{{ item.db }}"
     name: "{{ item.user }}"
     password: "{{ item.password }}"
   no_log: true # do not log passwords

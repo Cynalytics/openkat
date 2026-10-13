@@ -5,6 +5,9 @@ After=docker.service
 
 [Service]
 Type=oneshot
+# Stay active after the networks exist, so units that require this one do not
+# start it again on every (re)start and run into systemd's start limit.
+RemainAfterExit=yes
 WorkingDirectory={{ openkat_service_root }}/docker-compose-networks
 ExecStart={{ docker_binary}} compose -f {{ openkat_service_root }}/docker-compose-networks/docker-compose.yml --all-resources up
 ExecStop={{ docker_binary}} compose -f {{ openkat_service_root }}/docker-compose-networks/docker-compose.yml --all-resources stop

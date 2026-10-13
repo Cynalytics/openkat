@@ -2,6 +2,12 @@
 
 All notable functional changes for this role are documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- `docker-compose-networks.service` now sets `RemainAfterExit=yes`. Before, each start of a service that requires it ran the oneshot unit again, and the burst of restarts during an installation hit systemd's start limit, so dependent services such as postgres failed at random.
+
 ## 1.22.1-2
 
 ### Added

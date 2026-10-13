@@ -55,3 +55,10 @@ def test_postgres_service_unit_uses_role_paths(jinja_env, render_context):
         in rendered
     )
     assert "Requires=docker-compose-networks.service" in rendered
+
+
+def test_networks_service_unit_stays_active_after_exit(jinja_env, render_context):
+    rendered = jinja_env.get_template("docker-compose-networks.service.j2").render(render_context)
+
+    assert "Type=oneshot" in rendered
+    assert "RemainAfterExit=yes" in rendered

@@ -2,6 +2,13 @@
 
 All notable functional changes for this role are documented in this file.
 
+## 1.23.0-1
+
+### Changed
+
+- Bumped Openkat docker images to 1.23.0
+- Added octopusworker service
+
 ## 1.22.1-2
 
 ### Added

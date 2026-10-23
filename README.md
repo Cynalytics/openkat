@@ -121,7 +121,7 @@ Role task flow (high level):
    - `traefik`
    - `postgres`
    - `rabbitmq`
-   - application services (`bytes`, `boefje`, `crux`, `katalogus`, `normalizer`, `octopoes_api`, `octopoes_api_worker`, `octopoes_scanprofiles`, `mula`, `rocky`, `rocky_worker`)
+   - application services (`bytes`, `boefje`, `crux`, `katalogus`, `normalizer`, `octopoes_api`, `octopoes_api_worker`, `octopoes_worker`, `octopoes_scanprofiles`, `mula`, `rocky`, `rocky_worker`)
 
 ### systemd + Docker Compose model
 
@@ -155,7 +155,7 @@ Most service tasks:
 | `openkat_superuser_email` | empty | REQUIRED email address for superuser |
 | `openkat_traefik_letsencrypt_admin_email` | empty | REQUIRED email address for Lets Encrypt ceritificates |
 | `openkat_traefik_extra_ports` | `[]` | Additional public Traefik entrypoints/ports. Items can be `{name, port}` objects or plain port numbers. |
-| `openkat_version` |  `v1.22.0` | OpenKAT version to install or upgrade to |
+| `openkat_version` |  `v1.23.0` | OpenKAT version to install or upgrade to |
 | `openkat_docker_repository`| `docker.underdark.nl/librekat` |  Docker registry/repository prefix |
 | `openkat_crux_version`| `v1.1.0` | Version for Crux component |
 | `openkat_service_root`| `/opt/openkat` |  root path for service Compose directories  |
@@ -168,6 +168,7 @@ Most service tasks:
 | `openkat_normalizer_version` | `openkat_version` | specific version for normalizer service |
 | `openkat_octopoes_api_version` | `openkat_version` | specific version for octpous_api service |
 | `openkat_octopoes_api_worker_version` | `openkat_version` | specific version for octopus_api_worker service |
+| `openkat_octopoes_worker_version` | `openkat_version` | specific version for octopoes_worker service |
 | `openkat_octopoes_scanprofiles_version` | `openkat_version` | specific version for octopoes_scanprofiles service |
 | `openkat_rocky_version` | `openkat_version` | specific version for rocky service |
 | `openkat_rocky_worker_version` | `openkat_version` | specific version for rocky_worker service |

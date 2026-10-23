@@ -155,7 +155,7 @@ Most service tasks:
 | `openkat_superuser_email` | empty | REQUIRED email address for superuser |
 | `openkat_traefik_letsencrypt_admin_email` | empty | REQUIRED email address for Lets Encrypt ceritificates |
 | `openkat_traefik_extra_ports` | `[]` | Additional public Traefik entrypoints/ports. Items can be `{name, port}` objects or plain port numbers. |
-| `openkat_version` |  `v1.22.0` | OpenKAT version to install or upgrade to |
+| `openkat_version` |  `v1.23.0` | OpenKAT version to install or upgrade to |
 | `openkat_docker_repository`| `docker.underdark.nl/librekat` |  Docker registry/repository prefix |
 | `openkat_crux_version`| `v1.1.0` | Version for Crux component |
 | `openkat_service_root`| `/opt/openkat` |  root path for service Compose directories  |

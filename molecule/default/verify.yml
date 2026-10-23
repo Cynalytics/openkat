@@ -13,6 +13,7 @@
         - traefik.service
         - openkat_postgres.service
         - openkat_rocky.service
+        - openkat_octopoesworker.service
         - openkat_octopoes_scanprofiles.service
       register: service_states
 
@@ -29,10 +30,12 @@
         - "{{ openkat_service_root }}/traefik/docker-compose.yml"
         - "{{ openkat_service_root }}/postgres/docker-compose.yml"
         - "{{ openkat_service_root }}/rocky/docker-compose.yml"
+        - "{{ openkat_service_root }}/octopoesworker/docker-compose.yml"
         - "{{ openkat_service_root }}/octopoesscanprofiles/docker-compose.yml"
         - /etc/systemd/system/traefik.service
         - /etc/systemd/system/openkat_postgres.service
         - /etc/systemd/system/openkat_rocky.service
+        - /etc/systemd/system/openkat_octopoesworker.service
         - /etc/systemd/system/openkat_octopoes_scanprofiles.service
         - /etc/openkat/rocky/rocky_superuser_email
       register: openkat_generated_files
